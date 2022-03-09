@@ -1,5 +1,3 @@
- %
-% 2022-03-01
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% initialize params
@@ -46,6 +44,8 @@ for k = targetFolders
         %load some images for generating template
         %CURRENT SAVING SINGLE IMAGES NOT BATCHES
         imgStack = [];
+STOP
+
         for frmn = 1:500
             imgStack(:,:,frmn) = ScanImageTiffReader(fileList(frmn+100).name).data;
         end
@@ -156,6 +156,9 @@ for k = targetFolders
         %save some metadata
         %         save([fileName '\Registered\desc'],'desc') %FIX/UPDATE
         %save images outputDir - saving individual for virtual load in Fiji
+
+        %
+
         for frmn = 1:size(imgStack,3)
 
             filenameCh1 = [outputDirCh1 '\' sprintf('%06i', batches{j}(frmn) ) '.tif'];
@@ -175,9 +178,6 @@ for k = targetFolders
         disp(['Saved Images: ',outputDirCh1]);
     end
 end
-
-
-
 
 
 
