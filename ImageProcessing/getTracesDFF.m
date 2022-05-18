@@ -1,15 +1,46 @@
-%% loads stimulus and two photon timing data with Miji 
-
+%
+%
+%
+%
 %%%%%%%%%%%%%%%%%%%%%%
+
+%%initialize params
 datatype = 'BRUKER'; %BRUKER or SI - (SI uses bigtiffreader and file names are different)
 date = '02232022';
 filenum = 1;
 
-depth = 0; 
-pathlength = 0; 
-denType = 'basal'; 
-scale = 0; %pixel per microns
 %%%%%%%%%%%%%%%%%%%%%%
+%%get data location(s)
+folderList = gettargetFolders(['D:\',datatype,'\',date],filenum);
+for k = 1:length(folderList)
+%reg folder location
+cd(['D:\',datatype,'\',date,'\',folderList(k).name,'\Registered'])
+%load RoiSet.zip
+if exist('RoiSet.zip','file')
+    [sROI] = ReadImageJROI('RoiSet.zip');
+    nmCoord = sROI{1}.mnCoordinates;
+else
+    disp 'NO ROI FILE?'
+end
+%load imgInfo
+if exist('ImgInfo','file')
+    load ImgInfo
+else
+    disp 'NO ImgInfo?'
+end
+%reg data folder location
+cd(['D:\',datatype,'\',date,'\',folderList(1).name,'\Registered\Channel1'])
+fileList = dir('*.tif');
+%go through tiff stacks
+for fnum = 1:length(fileList)
+    imgstack = ScanImageTiffReader(fileList(fnum).name).data; % 0.315058 seconds per 1000 frame stack
+
+end
+%create and populate 'ce' structure
+ce = [];
+ce.img = [];
+%%
+
 
 date2p = monthChange(date);
 temp = ['open=M:\\',date2p,'\\t',sprintf('%.5d',file2p),'\\Registered\\Channel1\\000001.tif sort'];
@@ -195,4 +226,10 @@ end
 saveMijiData(savefilename)
 clc
 disp done
+
+% % for spine imaging
+% depth = 0; 
+% pathlength = 0; %distance from soma
+% denType = 'basal'; 
+% scale = 0; %pixel per microns
 
