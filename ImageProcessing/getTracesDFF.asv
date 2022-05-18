@@ -61,14 +61,11 @@ for k = 1:length(folderList)
             ce(cc).date = date;
             ce(cc).file = filenum;
             
-            ce(cc).soma = (strcmp(sROI{cc}.strType,'Freehand') | strcmp(sROI{cc}.strType,'Oval')) ...
-                & ~locatedDendriteROI;                          %magicwand or circle/oval ROI label
-            ce(cc).dendrite = strcmp(sROI{cc}.strType,'PolyLine') ...
-                & locatedDendriteROI;                           %segmented line ROI label
-            ce(cc).spine = strcmp(sROI{1}.strType,'Freehand');  %magicwand ROI label
-
-            ce(cc).dendriteSegment = [];                        %keep track of multiple segments
+            ce(cc).soma = (strcmp(sROI{cc}.strType,'Freehand') | strcmp(sROI{cc}.strType,'Oval')) & ~locatedDendriteROI;   %magicwand ROI label
+            ce(cc).dendrite = strcmp(sROI{cc}.strType,'PolyLine') & locatedDendriteROI;   %segmented line ROI label
+            ce(cc).dendriteSegment = [];
             ce(cc).denType = [];                                %defined by user from looking at cell
+            ce(cc).spine = strcmp(sROI{1}.strType,'Freehand');  %magicwand ROI label
             ce(cc).pathlength = [];                             %distance from soma (measured with Fiji and z stack)
             ce(cc).depth = [];                                  %imgInfo.Zdepth; %distance from surface
             ce(cc).img = [];

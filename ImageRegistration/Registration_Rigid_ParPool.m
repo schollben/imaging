@@ -21,7 +21,7 @@ datatype = 'BRUKER'; %BRUKER or SI - (SI uses bigtiffreader and file names are d
 %BRUKER files are MarkPoints or SingleImage or TSeries
 %SI files are user-defined names
 date = '02232022';
-fnames = [1]; %MAKE MORE FLEXIBLE-> NEED TO BATCH PROCESS EVENTUALLY
+fnames = [1:5]; %MAKE MORE FLEXIBLE-> NEED TO BATCH PROCESS EVENTUALLY
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 %find image location
@@ -114,6 +114,10 @@ for k = 1:length(folderList)
         imgStack = ScanImageTiffReader(fileList(1).name).data;
     end
 
+    [sizeX,sizeY,~] = size(imgStack);
+    imgInfo.sizeX = sizeX;
+    imgInfo.sizeY = sizeY;
+
     %%%%%%%%%%%%%%%%%%%%%%%%%%%
     % generate a template using brightest images
     imgStack = squeeze(imgStack);
@@ -202,7 +206,7 @@ for k = 1:length(folderList)
             else
                 if useCh2template
                     imwrite(uint16(ch1Stack(:,:,frmn))',filenameCh1,'tif','write','append','compression','none')
-                    imwrite(uint16(imgStack(:,:,frmn))',filenameCh2,'tiff-','write','append','compression','none')
+                    imwrite(uint16(imgStack(:,:,frmn))',filenameCh2,'tif','write','append','compression','none')
                 else
                     imwrite(uint16(imgStack(:,:,frmn))',filenameCh1,'tif','write','append','compression','none')
                 end

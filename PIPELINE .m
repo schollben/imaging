@@ -2,13 +2,13 @@
 %
 % Registation (motion correction)
 % 
-%   - subcellularRegisttration_normcorre: 
+%   - subcellularRegisttration_normcorre 
 %
-%   - Registration_Rigid_ParPool: 
+%   - Registration_Rigid_ParPool
 %
 %   - Registration_Rigid: Same as above without parallel processing
 %
-%   - Images are saved as 10,000 frame stacks
+%   - Images are saved as 1000-frame stacks
 %
 % Draw ROIs
 %   - Open Fiji (ImageJ)

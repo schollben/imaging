@@ -10,35 +10,27 @@ y(~insidexy) = NaN;
 removeIndicies = isnan(x) & isnan(y);
 x(removeIndicies) = [];
 y(removeIndicies) = [];
-%%
+
 end
 
+%%
 tic; 
-imData = tsStack(:,:,1:1000); 
-
+for frnum = 1:1000
+    im = squeeze(imgstack(:,:,frnum));
+    for cc = 1
+    m1(frnum) = mean(im(ss));
+    end
+end
 toc;
 
-%% how to read bruker metadata
-xml = xml2struct(fileList(1).name);
+%%
 
-%%
-cd D:\BRUKER\02232022\TSeries-02232022-1150-001\Registered\Channel1
-obj = Tiff('test2','w');
-%%
-setTag(obj,'Photometric',Tiff.Photometric.RGB);
-setTag(obj,'Compression',Tiff.Compression.None);
-setTag(obj,'BitsPerSample',16);
-setTag(obj,'SamplesPerPixel',1);
-setTag(obj,'ImageLength',512);
-setTag(obj,'ImageWidth',512);
-setTag(obj,'PlanarConfiguration',Tiff.PlanarConfiguration.Chunky);
-%%
-for frnm = 1:1000
-write(obj,uint16(imgstack(:,:,frnm)));
+tic;
+for cc = 1:100
+m2 = mean( reshape(imgstack(S), 128, 1000), 1);
 end
-close(obj);
+toc;
 
-%%
 
 
 

@@ -114,6 +114,10 @@ for k = 1:length(folderList)
         imgStack = ScanImageTiffReader(fileList(1).name).data;
     end
 
+    [sizeX,sizeY,~] = size(imgStack);
+    imgInfo.sizeX = sizeX;
+    imgInfo.sizeY = sizeY;
+    
     %%%%%%%%%%%%%%%%%%%%%%%%%%%
     % generate a template using brightest images
     imgStack = squeeze(imgStack);
@@ -199,17 +203,17 @@ for k = 1:length(folderList)
 
             if frmn == 1
                 if useCh2template
-                    imwrite(uint16(ch1Stack(:,:,frmn))',filenameCh1,'tif','write','overwrite');
-                    imwrite(uint16(imgStack(:,:,frmn))',filenameCh2,'tif','write','overwrite');
+                    imwrite(uint16(ch1Stack(:,:,frmn))',filenameCh1,'tif','write','overwrite','compression','none')
+                    imwrite(uint16(imgStack(:,:,frmn))',filenameCh2,'tif','write','overwrite','compression','none')
                 else
-                    imwrite(uint16(imgStack(:,:,frmn))',filenameCh1,'tif','write','overwrite');
+                    imwrite(uint16(imgStack(:,:,frmn))',filenameCh1,'tif','write','overwrite','compression','none')
                 end
             else
                 if useCh2template
-                    imwrite(uint16(ch1Stack(:,:,frmn))',filenameCh1,'tif','write','append');
-                    imwrite(uint16(imgStack(:,:,frmn))',filenameCh2,'tif','write','append');
+                    imwrite(uint16(ch1Stack(:,:,frmn))',filenameCh1,'tif','write','append','compression','none')
+                    imwrite(uint16(imgStack(:,:,frmn))',filenameCh2,'tif','write','append','compression','none')
                 else
-                    imwrite(uint16(imgStack(:,:,frmn))',filenameCh1,'tif','write','append');
+                    imwrite(uint16(imgStack(:,:,frmn))',filenameCh1,'tif','write','append','compression','none')
                 end
             end
         end

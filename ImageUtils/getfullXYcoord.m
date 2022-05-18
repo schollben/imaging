@@ -1,12 +1,5 @@
-function [X,Y]=getfullXYcoord(nmCoord)
+function [mask]=getfullXYcoord(nmCoord)
 
-[xx,yy] = meshgrid(nmCoord(:,1),nmCoord(:,2));
-insidexy = inpolygon(xx,yy,nmCoord(:,1),nmCoord(:,2));
-xx(~insidexy) = NaN;
-yy(~insidexy) = NaN;
-removeIndicies = isnan(xx) & isnan(yy);
-xx(removeIndicies) = [];
-yy(removeIndicies) = [];
+insidexy = inpolygon(1:imgInfo.sizeX, 1:imgInfo.sizeY, nmCoord(:,1), nmCoord(:,2));
 
-X = xx;
-Y = yy;
+[X,Y] = ind2sub([imgInfo.sizeX imgInfo.sizeY], find(insidexy));
