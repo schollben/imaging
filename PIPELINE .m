@@ -2,9 +2,9 @@
 %
 % Registation (motion correction)
 % 
-%   - subcellularRegisttration_normcorre 
+%   - subcellularRegisttration_normcorre: typically for spines and complex motion artifact
 %
-%   - Registration_Rigid_ParPool
+%   - Registration_Rigid_ParPool: for simple registration of movement
 %
 %   - Registration_Rigid: Same as above without parallel processing
 %
@@ -25,8 +25,7 @@
 %       generate processed data for subsqeuent analysis.
 %
 % Extract Signals for Analysis
-%   - 
-%   -
+%   - use 'getTracesDff' 
 %
 %
 %

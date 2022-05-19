@@ -45,7 +45,7 @@ for k = 1:length(folderList)
         global ce
         ce = [];
         maskstruct = [];
-
+        neuropilmask = [];
         for cc = 1:numCells
 
             nmCoord = sROI{cc}.mnCoordinates;
@@ -60,41 +60,50 @@ for k = 1:length(folderList)
             ce(cc).mask2d = sparse(mask2d);
             ce(cc).date = date;
             ce(cc).file = filenum;
-            
-            ce(cc).soma = (strcmp(sROI{cc}.strType,'Freehand') | strcmp(sROI{cc}.strType,'Oval')) & ~locatedDendriteROI;   %magicwand ROI label
-            ce(cc).dendrite = strcmp(sROI{cc}.strType,'PolyLine') & locatedDendriteROI;   %segmented line ROI label
-            ce(cc).dendriteSegment = [];
-            ce(cc).denType = [];                                %defined by user from looking at cell
+            ce(cc).framePeriod = imgInfo.framePeriod;
+            ce(cc).opticalZoom = imgInfo.opticalZoom;
+
+            ce(cc).soma = (strcmp(sROI{cc}.strType,'Freehand') | strcmp(sROI{cc}.strType,'Oval')) ...
+                & ~locatedDendriteROI;                          %magicwand or circle/oval ROI label
+            ce(cc).dendrite = strcmp(sROI{cc}.strType,'PolyLine') ...
+                & locatedDendriteROI;                           %segmented line ROI label
             ce(cc).spine = strcmp(sROI{1}.strType,'Freehand');  %magicwand ROI label
+
+            ce(cc).dendriteSegment = [];                        %keep track of multiple segments
+            ce(cc).denType = [];                                %defined by user from looking at cell
             ce(cc).pathlength = [];                             %distance from soma (measured with Fiji and z stack)
             ce(cc).depth = [];                                  %imgInfo.Zdepth; %distance from surface
             ce(cc).img = [];
 
-            ce(cc).scale = [];                                  %imgInfo.Zdepth  % !!! IMPORTANT FOR LATER -> how to get for scanimage?
+            ce(cc).scale = [];                                  %imgInfo.scale  % !!! IMPORTANT FOR LATER -> how to get for scanimage?
             ce(cc).raw = [];
 
         end
-        toc;
+        toc
 
         %reg data folder location
         cd([cd,'\Channel1'])
         fileList = dir('*.tiff');
 
         %go through tiff stacks
+        disp 'load stacks amd extract traces...'
         tic;
         for ff = 1:length(fileList)
             
-            disp 'loading image stack...'
             imgstack = ScanImageTiffReader(fileList(ff).name).data; % < 1 sec per 1000 frame stack
             
-            disp 'extract traces'
             for cc = 1:numCells
-                ftrace = mean( reshape (imgstack(  maskstruct(cc).mask ), length(find(ce(cc).mask2d)) , 1000), 1);
-                ce(cc).raw = cat(1, ce(cc).raw, ftrace);
+                ftrace = mean( reshape (imgstack(  maskstruct(cc).mask(:,:,1:size(imgstack,3)) ), length(find(ce(cc).mask2d)) , size(imgstack,3)), 1);
+                ce(cc).raw = cat(2, ce(cc).raw, ftrace);
             end
 
+            %save img
+            if ff ==1
+                ce(1).img = squeeze(mean(imgstack,3));
+            end
+            
         end
-        toc;
+        toc
 
     end
 end

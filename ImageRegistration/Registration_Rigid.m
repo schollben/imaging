@@ -34,63 +34,9 @@ for k = 1:length(folderList)
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%
     %read in some metadata
-    imgInfo = [];
-    if strcmp(datatype,'BRUKER')
+    [imgInfo,fileList] = getmetadata(datatype,fileList,folderList(k).name);
 
-        imgInfo = readXmlFile_v2([folderList(k).name,'.XML']);
-        if  imgInfo.PMTgain_ch01 > 0 && useCh2template
-            disp 'found red channel (channel 1 on bruker system)'
-            useCh2template = 1;
-        else
-            useCh2template = 0;
-            disp 'no red channel'
-        end
-        
-        %edit fileList to focus on channel 2 (green) images 
-        % (dont care about red channel right now)
-        ch1_inds = [];
-        for j = 1:length(fileList)
-            if ~~strfind(fileList(j).name,'Ch2')
-                ch1_inds = [ch1_inds j];
-            end
-        end
-        %update fileList
-        fileList = fileList(ch1_inds);
-
-    elseif strcmp(datatype,'SI')
-        % NOTE- HAVE NOT EDITED THIS CODE YET
-        metadata=ScanImageTiffReader([fileName,'/',files(1).name]).metadata;
-        meta = regexp(metadata,'[\w\.]+','match');
-        %check if there 2 channels saved
-        loc = find(ismember(meta, 'SI.hChannels.channelSave'));
-        if str2double(meta{loc+2})==2 && useCh2template
-            disp 'found red channel (2)'
-            useCh2template = 1;
-        else
-            useCh2template = 0;
-            disp 'no red channel'
-        end
-        %check how many ROIs there (and if mROI imaging)
-        loc = find(ismember(meta, 'scanimage.mroi.Roi'));
-        numROIs = length(loc);
-        imgInfo.numROIs = numROIs;
-        if numROIs>1
-            disp 'mROI imaging detected'
-        end
-        %framerate
-        loc = find(ismember(meta, 'SI.hRoiManager.scanFrameRate'));
-        imgInfo.framerate = str2double(meta(loc+1));
-        %Zoom angle
-        loc = find(ismember(meta, 'SI.hRoiManager.scanZoomFactor'));
-        imgInfo.zoom = str2double(meta(loc+1));
-        %is there a Ch2?
-        if useCh2template
-            imgStack = imgStack(:,:,2:2:end);
-        end
-    else
-        disp 'no type'
-    end
-
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%
     %check to see if single images saved or stacks of images. assuming that
     %there would never be 100 stacks. (e.g. SI set to save stacks of 100 images)
     if length(fileList)>1000
@@ -180,10 +126,6 @@ for k = 1:length(folderList)
         [imgStack,ch1Stack]=rigidReg(imgStack,template,ChunkProcess,useCh2template,downsampleRates,maxMovement);
         
         %%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %save some metadata
-        %FIX/UPDATE/ADD
-        %save([fileName '\Registered\desc'],'desc') %FIX/UPDATE
-
         %save images outputDir
         for frmn = 1:size(imgStack,3)
 

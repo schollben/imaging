@@ -8,6 +8,8 @@
 datatype = 'BRUKER'; %BRUKER or SI - (SI uses bigtiffreader and file names are different)
 date = '02232022';
 filenum = 1;
+doNeuropil = 0;
+tic;
 
 %%%%%%%%%%%%%%%%%%%%%%
 %%get data locations
@@ -16,41 +18,45 @@ for k = 1:length(folderList)
     %reg folder location
     cd(['D:\',datatype,'\',date,'\',folderList(k).name,'\Registered'])
 
+    %%%%%%%%%%%
     %load RoiSet.zip
     if exist('RoiSet.zip','file')
         [sROI] = ReadImageJROI('RoiSet.zip');
         numCells = length(sROI);
 
         % locate any dendrite ROIs
+        locatedDendriteROI = 0;
         for cc = 1:numCells
             if strcmp(sROI{cc}.strType,'PolyLine')
-                locatedDendriteROI = 1;
-            else
-                locatedDendriteROI = 0;
+                locatedDendriteROI = ~locatedDendriteROI;
             end
         end
     end
-
+        
+    %%%%%%%%%%%
     %load imgInfo
     if exist('imgInfo.mat','file')
         load imgInfo
-        imgInfo.sizeX = 512;
-        imgInfo.sizeY = 512;
+        if ~isfield(imgInfo,'sizeX')
+            imgInfo.sizeX = 512;
+            imgInfo.sizeY = 512;
+        end
     end
 
+    %%%%%%%%%%%
     if exist('sROI','var') && exist('imgInfo','var')
 
         disp 'build ce struct and generate sparse masks'
-        tic;
         global ce
         ce = [];
         maskstruct = [];
-
+        neuropilmask = zeros(imgInfo.sizeX,imgInfo.sizeY);
         for cc = 1:numCells
 
             nmCoord = sROI{cc}.mnCoordinates;
             [x,y]=meshgrid(1:imgInfo.sizeX,1:imgInfo.sizeY);
             mask2d = inpolygon( x, y, nmCoord(:,1), nmCoord(:,2));
+            neuropilmask = neuropilmask + mask2d;
             sparse3dmask = ndSparse( repmat( mask2d , 1, 1, 1000)); %expect 1000-frame stacks
             maskstruct(cc).mask = sparse3dmask;
 
@@ -60,12 +66,15 @@ for k = 1:length(folderList)
             ce(cc).mask2d = sparse(mask2d);
             ce(cc).date = date;
             ce(cc).file = filenum;
-            
+            ce(cc).framePeriod = imgInfo.framePeriod;
+            ce(cc).opticalZoom = imgInfo.opticalZoom;
+
             ce(cc).soma = (strcmp(sROI{cc}.strType,'Freehand') | strcmp(sROI{cc}.strType,'Oval')) ...
                 & ~locatedDendriteROI;                          %magicwand or circle/oval ROI label
             ce(cc).dendrite = strcmp(sROI{cc}.strType,'PolyLine') ...
                 & locatedDendriteROI;                           %segmented line ROI label
-            ce(cc).spine = strcmp(sROI{1}.strType,'Freehand');  %magicwand ROI label
+            ce(cc).spine = strcmp(sROI{cc}.strType,'Freehand') & ...
+                locatedDendriteROI;  %magicwand ROI label
 
             ce(cc).dendriteSegment = [];                        %keep track of multiple segments
             ce(cc).denType = [];                                %defined by user from looking at cell
@@ -73,34 +82,75 @@ for k = 1:length(folderList)
             ce(cc).depth = [];                                  %imgInfo.Zdepth; %distance from surface
             ce(cc).img = [];
 
-            ce(cc).scale = [];                                  %imgInfo.Zdepth  % !!! IMPORTANT FOR LATER -> how to get for scanimage?
+            ce(cc).scale = 1 / imgInfo.micronsPerPixel(1);      % pixels per micron -> need to add for SI
             ce(cc).raw = [];
-
+            ce(cc).raw_neuropil = [];
+            
+            fprintf('.')
         end
-        toc;
+        toc
+
+        if doNeuropil
+            %transform neuropilmask
+            neuropilmask = ~logical(neuropilmask);
+            neuropil3dmask = ndSparse( repmat( neuropilmask , 1, 1, 1000));
+        end
 
         %reg data folder location
         cd([cd,'\Channel1'])
         fileList = dir('*.tiff');
-
+        
+        %%%%%%%%%%%
         %go through tiff stacks
-        tic;
+        disp 'load stacks amd extract traces...'
         for ff = 1:length(fileList)
             
-            disp 'loading image stack...'
-            imgstack = ScanImageTiffReader(fileList(ff).name).data; % < 1 sec per 1000 frame stack
-            
-            disp 'extract traces'
+            imgstack = ScanImageTiffReader(fileList(ff).name).data; fprintf('.') % < 1 sec per 1000 frame stack
+
             for cc = 1:numCells
-                ftrace = mean( reshape (imgstack(  maskstruct(cc).mask ), length(find(ce(cc).mask2d)) , 1000), 1);
-                ce(cc).raw = cat(1, ce(cc).raw, ftrace);
+                ftrace = mean( reshape (imgstack(  maskstruct(cc).mask(:,:,1:size(imgstack,3)) ), length(find(ce(cc).mask2d)) , size(imgstack,3) , 1));
+                ce(cc).raw = cat(1, ce(cc).raw, ftrace');
+            end
+            
+            if doNeuropil
+                %neuropil trace
+                %only added to ce(1)
+                ftrace = mean( reshape (imgstack( neuropil3dmask(:,:,1:size(imgstack,3)) ), length(find(neuropilmask)) , size(imgstack,3), 1));
+                ce(1).raw_neuropil = cat(1, ce(1).raw_neuropil, ftrace');
             end
 
+            %save sample image
+            %only added to ce(1)
+            if ff == 1 && (ce(cc).soma==1 || ce(cc).dendrite)
+                ce(cc).img = squeeze(mean(imgstack,3));
+            end
+            fprintf('.')
         end
-        toc;
+        toc
 
+        %%%%%%%%%%%
+        disp 'calculate df/f for all ROIs - downsampled 4x'
+        for cc = 1:length(ce)
+            dff = filterBaseline_dFcomp2(resample( ce(cc).raw , 1 , 4));
+            ce(cc).dff = dff;
+        end
+
+        if doNeuropil
+            %calculate df/f for neuropil trace
+            dff = filterBaseline_dFcomp2 (resample( ce(cc).raw_neuropil , 1 , 4));
+            ce(cc).dff_neuropil = dff;
+        end
+        toc
+
+        %%%%%%%%%%%
+        %dendritic substraction
+        DendriteSubtraction
+
+        %neuropil subtraction - TO ADD
+        
     end
 end
+disp finished
 
 %%%%%%%%%%%%%%%%%%%%%%
 
@@ -237,50 +287,6 @@ for cc = 1:length(ce)
 end
 
 
-%dendritic subtraction
-for cc = 1:length(ce)
-    if ce(cc).spine
-        %find dendrite
-        dendPoint = cc;
-        while ~ce(dendPoint).dendrite
-            dendPoint = dendPoint+1;
-        end
-        Spdff = ce(cc).dff;
-        Spdff = Spdff(1:round(length(Spdff)*.9));
-        Spdff(isinf(Spdff)) = 0;
-        Spdff_sub = Spdff(Spdff < nanmedian(Spdff)+abs(min(Spdff)));
-        noiseM = nanmedian(Spdff_sub); % should be near 0
-        noiseSD = nanstd(Spdff_sub);
-        spcyc = ce(cc).cyc(:);
-        spcyc(isnan(spcyc)) = 0;
-        slope = robustfit(ce(dendPoint).cyc(:),spcyc);
-        %dendritic scalar applied (from robust fit) to cyc and subtraction
-        ce(cc).slope = slope(2);
-        
-        ce(cc).cycRes = ce(cc).cyc - slope(2).*ce(dendPoint).cyc;
-        ce(cc).cycRes(ce(cc).cycRes < 0) = 0;
-
-        r = ce(cc).dff - slope(2).*ce(dendPoint).dff;
-
-        ce(cc).dffRes = r;
-        
-        rSp =  ce(cc).dff;
-        rDn =  ce(dendPoint).dff;
-        rSp = rSp - slope(2).*rDn;
-        rSp(rSp < -noiseSD) = -noiseSD;
-        rSp(isinf(rSp)) = 0;
-        rDn(isinf(rDn)) = 0;
-        ce(cc).rawRes = rSp;
-        rSp(rSp <= 0) = nan;
-        rDn(rDn <= 0) = nan;
-        r = corrcoef(rSp,rDn,'rows','pairwise');
-        ce(cc).corr = r(2);
-    else
-        ce(cc).cycRes = [];
-        ce(cc).slope = [];
-        ce(cc).corr = -1;
-    end
-end
 
 
 %save ce struct to processed data stream for later
