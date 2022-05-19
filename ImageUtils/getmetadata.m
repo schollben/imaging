@@ -2,7 +2,7 @@
 % example:
 %  [imgInfo,fileList] = getmetadata(datatype,fileList,folderList(k).name)
 
-function [imgInfo,fileList] = getmetadata(datatype,fileList,foldername)
+function [imgInfo,fileList] = getmetadata(datatype,fileList,foldername,useCh2template)
 
 if strcmp(datatype,'BRUKER')
 

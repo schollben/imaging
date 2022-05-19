@@ -5,8 +5,6 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%initialize parallel
 clear 
-delete(gcp)
-parpool
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%initialize params
 downsampleRates = [1/16 1/8 1/4 1/2 1];
@@ -39,7 +37,7 @@ for k = 1:length(folderList)
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%
     %read in some metadata
-    [imgInfo,fileList] = getmetadata(datatype,fileList,folderList(k).name);
+    [imgInfo,fileList] = getmetadata(datatype,fileList,folderList(k).name,useCh2template);
 
     %check to see if single images saved or stacks of images. assuming that
     %there would never be 100 stacks. (e.g. SI set to save stacks of 100 images)

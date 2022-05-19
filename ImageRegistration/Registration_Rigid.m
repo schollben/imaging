@@ -34,7 +34,7 @@ for k = 1:length(folderList)
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%
     %read in some metadata
-    [imgInfo,fileList] = getmetadata(datatype,fileList,folderList(k).name);
+    [imgInfo,fileList] = getmetadata(datatype,fileList,folderList(k).name,useCh2template);
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%
     %check to see if single images saved or stacks of images. assuming that

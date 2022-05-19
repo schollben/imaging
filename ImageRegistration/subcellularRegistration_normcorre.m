@@ -5,8 +5,6 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%initialize parallel
 clear 
-delete(gcp)
-parpool
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%initialize params
 niter = 1; %number of iterations
@@ -22,7 +20,7 @@ datatype = 'BRUKER'; %BRUKER or SI
 %BRUKER files are MarkPoints or SingleImage or TSeries
 %SI files are user-defined names
 date = '02232022';
-fnames = [1]; 
+fnames = [2 4 5]; 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 %find image location
 folderList = gettargetFolders(['D:\',datatype,'\',date],fnames);
@@ -39,7 +37,7 @@ for k = 1:length(folderList)
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%
     %read in some metadata
-    [imgInfo,fileList] = getmetadata(datatype,fileList,folderList(k).name);
+    [imgInfo,fileList] = getmetadata(datatype,fileList,folderList(k).name,useCh2template);
 
     %check to see if single images saved or stacks of images. assuming that
     %there would never be 100 stacks. (e.g. SI set to save stacks of 100 images)
