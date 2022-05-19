@@ -57,7 +57,7 @@ for cc = 1:length(ce)
         rSp(rSp < -noiseSD) = -noiseSD;
         rSp(isinf(rSp)) = 0;
         rDn(isinf(rDn)) = 0;
-        ce(cc).rawRes = rSp;
+        ce(cc).dffRes = rSp;
         rSp(rSp <= 0) = nan;
         rDn(rDn <= 0) = nan;
         r = corrcoef(rSp,rDn,'rows','pairwise');

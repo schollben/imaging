@@ -21,7 +21,7 @@ datatype = 'BRUKER'; %BRUKER or SI - (SI uses bigtiffreader and file names are d
 %BRUKER files are MarkPoints or SingleImage or TSeries
 %SI files are user-defined names
 date = '02232022';
-fnames = [1:5]; %MAKE MORE FLEXIBLE-> NEED TO BATCH PROCESS EVENTUALLY
+fnames = [1 3]; %MAKE MORE FLEXIBLE-> NEED TO BATCH PROCESS EVENTUALLY
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 %find image location

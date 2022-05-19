@@ -60,11 +60,12 @@ for k = 1:length(folderList)
         maskstruct = [];
         neuropilmask = zeros(imgInfo.sizeX,imgInfo.sizeY);
         [x,y]=meshgrid(1:imgInfo.sizeX,1:imgInfo.sizeY);
+
         for cc = 1:numCells
 
             nmCoord = sROI{cc}.mnCoordinates;
 
-            if ~strcmp(sROI{cc}.strType,'PolyLine')
+            if strcmp(sROI{cc}.strType,'PolyLine')
                 %dendrite ROI
                 mask2d = genPolyLineROI(nmCoord,sROI{cc}.nStrokeWidth);
             else

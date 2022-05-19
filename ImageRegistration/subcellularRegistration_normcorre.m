@@ -16,13 +16,13 @@ op = 32; %grid overlap
 %see more NormCorre parameters below
 doimagSpatSamp = 0; %flag to use 0.5x downsampling
 useCh2template = 0; %use Ch2 for registering (red/structural)
-datatype = 'BRUKER'; %BRUKER or SI - (SI uses bigtiffreader and file names are different)
+datatype = 'BRUKER'; %BRUKER or SI
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 %data location and folder(s)
 %BRUKER files are MarkPoints or SingleImage or TSeries
 %SI files are user-defined names
 date = '02232022';
-fnames = [1]; %MAKE MORE FLEXIBLE-> NEED TO BATCH PROCESS EVENTUALLY
+fnames = [1]; 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 %find image location
 folderList = gettargetFolders(['D:\',datatype,'\',date],fnames);

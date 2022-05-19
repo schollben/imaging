@@ -1,4 +1,4 @@
-% PIPELINE
+% PIPELINE README
 %
 % Registation (motion correction)
 % 
@@ -24,8 +24,7 @@
 %       imaging (i.e. cells, as compared to dendritic spines). This can
 %       generate processed data for subsqeuent analysis.
 %
-% Extract Signals for Analysis
-%   - use 'getTracesDff' 
+% Extract Signals for Analysis: 'getTracesDFF' 
 %
 %
 %
