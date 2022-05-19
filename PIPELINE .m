@@ -16,7 +16,7 @@
 %   - use *** File-> Import-> TIFF Virtual Stack ***
 %   - Use 'cell magic wand' to draw cell and spine ROIs
 %   - Use 'sgemented line' to draw dendrite ROIs
-%   - Save the ROI set to the data file folder ('Registered')
+%   - Save the ROI set to the data file folder ('/Registered')
 %   
 %   Alternatively: 
 %       - Use Suite2p for loading data, automatic ROI detection, and signal

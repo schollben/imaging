@@ -1,11 +1,10 @@
 % dendritic subtraction
 %
-% flag = 1 - use the dff traces for robust fit
-% flag = 2 - use the stimulus driven activity periods ('cyc')
+%
 function [] = DendriteSubtraction(flag)
 
 global ce
-
+%%
 isDendrite = find([ce.dendrite]);
 
 %is dendrite ROI before or after spine ROIs?
@@ -30,23 +29,19 @@ for cc = 1:length(ce)
         noiseM = nanmedian(Spdff_sub); % should be near 0
         noiseSD = nanstd(Spdff_sub);
 
-        if flag==1
-            slope = robustfit(ce( isDendrite(dendcnt) ).dff, ce(cc).dff);
-        elseif flag==2 && isfield(ce,'cyc')
-            spcyc = ce(cc).cyc(:);
-            spcyc(isnan(spcyc)) = 0;
-            slope = robustfit(ce( isDendrite(dendcnt) ).cyc(:),spcyc);
-        else
-            slope = robustfit(ce( isDendrite(dendcnt) ).dff, ce(cc).dff);
-        end
-        
+%         spcyc = ce(cc).cyc(:);
+%         spcyc(isnan(spcyc)) = 0;
+% 
+%         slope = robustfit(ce( isDendrite(dendcnt) ).cyc(:),spcyc);
+% 
+%         %dendritic scalar applied (from robust fit) to cyc and subtraction
+%         ce(cc).slope = slope(2);
+% 
+%         ce(cc).cycRes = ce(cc).cyc - slope(2).*ce( isDendrite(dendcnt) ).cyc;
+%         ce(cc).cycRes(ce(cc).cycRes < 0) = 0;
+
+        slope = robustfit(ce( isDendrite(dendcnt) ).dff, ce(cc).dff);
         ce(cc).slope = slope(2);
-
-        if isfield(ce,'cyc')
-            ce(cc).cycRes = ce(cc).cyc - slope(2).*ce( isDendrite(dendcnt) ).cyc;
-            ce(cc).cycRes(ce(cc).cycRes < 0) = 0;
-        end
-
         r = ce(cc).dff - slope(2).*ce( isDendrite(dendcnt) ).dff;
 
         ce(cc).dffRes = r;
