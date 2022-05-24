@@ -11,7 +11,7 @@ parpool
 niter = 1; %number of iterations
 gridWidth = 256; %decrease for better registration (in px)
 gridHeight = 256; %decrease for better registration (in px)
-op = 32; %grid overlap
+op = 32; %grid overlap 
 %see more NormCorre parameters below
 doimagSpatSamp = 0; %flag to use 0.5x downsampling
 useCh2template = 0; %use Ch2 for registering (red/structural)
@@ -86,8 +86,8 @@ for k = 1:length(folderList)
 
         BatchSize = 1000;
         batches={};
-        for j = 1:ceil(numFiles/BatchSize)
-            if j~=ceil(numFiles/BatchSize)
+        for j = 1:ceil(length(fileList)/BatchSize)
+            if j~=ceil(length(fileList)/BatchSize)
                 batches{j} = BatchSize*(j-1)+1:BatchSize*j;
             else
                 batches{j} = BatchSize*(j-1)+1:length(fileList);

@@ -86,8 +86,8 @@ for k = 1:length(folderList)
 
         BatchSize = 1000;
         batches={};
-        for j = 1:ceil(numFiles/BatchSize)
-            if j~=ceil(numFiles/BatchSize)
+        for j = 1:ceil(length(fileList)/BatchSize)
+            if j~=ceil(length(fileList)/BatchSize)
                 batches{j} = BatchSize*(j-1)+1:BatchSize*j;
             else
                 batches{j} = BatchSize*(j-1)+1:length(fileList);
