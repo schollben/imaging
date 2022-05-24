@@ -6,7 +6,7 @@ function [] = DendriteSubtraction(flag)
 
 global ce
 
-isDendrite = find([ce.dendrite]);
+isDendrite = [ce.dendrite];
 
 %is dendrite ROI before or after spine ROIs?
 if isDendrite(1)==1

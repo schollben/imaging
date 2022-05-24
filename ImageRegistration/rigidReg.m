@@ -2,7 +2,7 @@
 %
 % 03-02-2022
 
-function [newstack,newch1stack]=rigidReg(imgStack,template,ChunkProcess,useCh2template,downsampleRates,maxMovement)
+function [newstack,newch1stack]=rigidReg(imgStack,ch1Stack,template,ChunkProcess,useCh2template,downsampleRates,maxMovement)
 
 %init
 [height, width, depth] = size(imgStack);
@@ -174,7 +174,7 @@ for d=1:depth
         shiftedImg = ones(height,width)*double(min(min(img)));
         shiftedImg(shiftedY1:shiftedY2,shiftedX1:shiftedX2) = img(subRegY1:subRegY2,...
             subRegX1:subRegX2);
-        newstack(:,:,d) = shiftedImg;
+        newch1stack(:,:,d) = shiftedImg;
     end
 
 end

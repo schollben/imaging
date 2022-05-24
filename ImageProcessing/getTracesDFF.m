@@ -19,12 +19,12 @@ tic;
 
 %%%%%%%%%%%%%%%%%%%%%%
 %%get data locations
-folderList = gettargetFolders(['D:\',datatype,'\',date],filenum);
+folderList = gettargetFolders2(['D:\',datatype,'\'],date,filenum);
 
 for k = 1:length(folderList)
 
     %reg folder location
-    cd(['D:\',datatype,'\',date,'\',folderList(k).name,'\Registered'])
+    cd(['D:\',datatype,'\',folderList(k).name,'\Registered'])
 
     %%%%%%%%%%%
     %load RoiSet.zip
