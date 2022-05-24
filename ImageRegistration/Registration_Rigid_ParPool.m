@@ -3,10 +3,11 @@
 % usually used for large datasets
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%initialize parallel
+%% initialize parallel
 clear 
+parpool
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%initialize params
+%% initialize params
 downsampleRates = [1/16 1/8 1/4 1/2 1];
 maxMovement = 1/8;
 ChunkProcess = 0; %flag to apply shifts across batches of images
@@ -19,7 +20,7 @@ datatype = 'BRUKER'; %BRUKER or SI - (SI uses bigtiffreader and file names are d
 %BRUKER files are MarkPoints or SingleImage or TSeries
 %SI files are user-defined names
 date = '02232022';
-fnames = [1 3]; %MAKE MORE FLEXIBLE-> NEED TO BATCH PROCESS EVENTUALLY
+fnames = [1 3];
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 %find image location
@@ -37,29 +38,36 @@ for k = 1:length(folderList)
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%
     %read in some metadata
-    [imgInfo,fileList] = getmetadata(datatype,fileList,folderList(k).name,useCh2template);
+    [imgInfo,fileList] = getmetadata(datatype,folderList(k).name,fileList);
 
-    %check to see if single images saved or stacks of images. assuming that
-    %there would never be 100 stacks. (e.g. SI set to save stacks of 100 images)
-    if length(fileList)>1000
-        singleimages = 1;
-    else
-        singleimages = 0;
-    end
-
-    %load some images for generating template
-    imgStack = [];
-    if singleimages==1
-        for frmn = 1:1000
-            imgStack(:,:,frmn) = ScanImageTiffReader(fileList(frmn+100).name).data;
-        end
-    else
-        imgStack = ScanImageTiffReader(fileList(1).name).data;
-    end
-
-    [sizeX,sizeY,~] = size(imgStack);
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %load file to generate template
+    imgStack = ScanImageTiffReader(fileList(1).name).data;
+    
+    [sizeX,sizeY,depth] = size(imgStack);
     imgInfo.sizeX = sizeX;
     imgInfo.sizeY = sizeY;
+
+    if depth==1
+        
+        singleimages = 1; %flag used later
+
+        if length(fileList)<1000
+            mFrames = length(fileList);
+        else
+            mFrames = 1000;
+        end
+        
+        for frmn = 1:mFrames
+            imgStack(:,:,frmn) = ScanImageTiffReader(fileList(frmn).name).data;
+        end    
+    end
+
+    if useCh2template && imgInfo.isCh2
+        imgStack = imgStack(:,:,2:2:end);
+    elseif ~useCh2template && imgInfo.isCh2
+        imgStack = imgStack(:,:,1:2:end);
+    end
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%
     % generate a template using brightest images
@@ -72,24 +80,30 @@ for k = 1:length(folderList)
     end
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %begin working files
+    %generate batches to process
 
     if singleimages==1
+
         BatchSize = 1000;
         batches={};
-        for j = 1:ceil(length(fileList)/BatchSize)
-            if j~=ceil(length(fileList)/BatchSize)
+        for j = 1:ceil(numFiles/BatchSize)
+            if j~=ceil(numFiles/BatchSize)
                 batches{j} = BatchSize*(j-1)+1:BatchSize*j;
             else
                 batches{j} = BatchSize*(j-1)+1:length(fileList);
             end
         end
+    
     else
+    
         for j = 1:length(fileList)
             batches{j} = j;
         end
+    
     end
 
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %begin working files
     parfor j = 1:length(batches)
 
         %build stack
@@ -130,10 +144,6 @@ for k = 1:length(folderList)
         [imgStack,ch1Stack]=rigidReg(imgStack,template,ChunkProcess,useCh2template,downsampleRates,maxMovement);
 
         %%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %save some metadata
-        %FIX/UPDATE/ADD
-        %save([fileName '\Registered\desc'],'desc') %FIX/UPDATE
-
         %save images outputDir
         filenameCh1 = [outputDirCh1 '\' sprintf('%06i', j ) '.tiff'];
         filenameCh2 = [outputDirCh2 '\' sprintf('%06i', j ) '.tiff'];

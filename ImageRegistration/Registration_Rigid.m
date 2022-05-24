@@ -16,7 +16,7 @@ datatype = 'BRUKER'; %BRUKER or SI
 %BRUKER files are MarkPoints or SingleImage or TSeries
 %SI files are user-defined names
 date = '05162022';
-fnames = [1]; %MAKE MORE FLEXIBLE-> NEED TO BATCH PROCESS EVENTUALLY
+fnames = [1];
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 %find image location
@@ -100,8 +100,8 @@ for k = 1:length(folderList)
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%
     %begin working files
-
     for j = 1:length(batches) 
+        
         %build stack
         imgStack = [];
         for frmn = batches{j}
@@ -137,7 +137,7 @@ for k = 1:length(folderList)
         [height,width,depth] = size(imgStack);
         
         %%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %% begin working files
+        %%begin working files
         [imgStack,ch1Stack]=rigidReg(imgStack,ch1Stack,template,ChunkProcess,useCh2template,downsampleRates,maxMovement);
         
         %%%%%%%%%%%%%%%%%%%%%%%%%%%

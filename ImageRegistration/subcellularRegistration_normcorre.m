@@ -3,10 +3,11 @@
 %
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%initialize parallel
+%% initialize parallel
 clear 
+parpool
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%initialize params
+%% initialize params
 niter = 1; %number of iterations
 gridWidth = 256; %decrease for better registration (in px)
 gridHeight = 256; %decrease for better registration (in px)
@@ -37,29 +38,36 @@ for k = 1:length(folderList)
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%
     %read in some metadata
-    [imgInfo,fileList] = getmetadata(datatype,fileList,folderList(k).name,useCh2template);
+    [imgInfo,fileList] = getmetadata(datatype,folderList(k).name,fileList);
 
-    %check to see if single images saved or stacks of images. assuming that
-    %there would never be 100 stacks. (e.g. SI set to save stacks of 100 images)
-    if length(fileList)>1000
-        singleimages = 1;
-    else
-        singleimages = 0;
-    end
-
-    %load some images for generating template
-    imgStack = [];
-    if singleimages==1
-        for frmn = 1:1000
-            imgStack(:,:,frmn) = ScanImageTiffReader(fileList(frmn+100).name).data;
-        end
-    else
-        imgStack = ScanImageTiffReader(fileList(1).name).data;
-    end
-
-    [sizeX,sizeY,~] = size(imgStack);
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %load file to generate template
+    imgStack = ScanImageTiffReader(fileList(1).name).data;
+    
+    [sizeX,sizeY,depth] = size(imgStack);
     imgInfo.sizeX = sizeX;
     imgInfo.sizeY = sizeY;
+
+    if depth==1
+        
+        singleimages = 1; %flag used later
+
+        if length(fileList)<1000
+            mFrames = length(fileList);
+        else
+            mFrames = 1000;
+        end
+        
+        for frmn = 1:mFrames
+            imgStack(:,:,frmn) = ScanImageTiffReader(fileList(frmn).name).data;
+        end    
+    end
+
+    if useCh2template && imgInfo.isCh2
+        imgStack = imgStack(:,:,2:2:end);
+    elseif ~useCh2template && imgInfo.isCh2
+        imgStack = imgStack(:,:,1:2:end);
+    end
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%
     % generate a template using brightest images
@@ -72,24 +80,30 @@ for k = 1:length(folderList)
     end
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %begin working files
+    %generate batches to process
 
     if singleimages==1
+
         BatchSize = 1000;
         batches={};
-        for j = 1:ceil(length(fileList)/BatchSize)
-            if j~=ceil(length(fileList)/BatchSize)
+        for j = 1:ceil(numFiles/BatchSize)
+            if j~=ceil(numFiles/BatchSize)
                 batches{j} = BatchSize*(j-1)+1:BatchSize*j;
             else
                 batches{j} = BatchSize*(j-1)+1:length(fileList);
             end
         end
+    
     else
+    
         for j = 1:length(fileList)
             batches{j} = j;
         end
+    
     end
 
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %begin working files
     for j = 1:length(batches)
         tic;
         %build stack
@@ -134,10 +148,6 @@ for k = 1:length(folderList)
             ch1Stack = apply_shifts(ch1Stack,shifts,options_rigid);
         end
         %%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %save some metadata
-        %FIX/UPDATE/ADD
-        %save([fileName '\Registered\desc'],'desc') %FIX/UPDATE
-
         %save images outputDir
         for frmn = 1:size(imgStack,3)
 

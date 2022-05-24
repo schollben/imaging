@@ -1,10 +1,10 @@
- %
-% 2022-03-01
-
+% code to use rigid registration with parallel toolbox
+% usually used to register cellular imaging data
+% usually used for large datasets
+%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%initialize parallel
 clear 
-delete(gcp)
 parpool
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% initialize params
@@ -20,32 +20,29 @@ datatype = 'BRUKER'; %BRUKER or SI - (SI uses bigtiffreader and file names are d
 %BRUKER files are MarkPoints or SingleImage or TSeries
 %SI files are user-defined names
 date = '02232022';
-fnames = [1]; %MAKE MORE FLEXIBLE-> NEED TO BATCH PROCESS EVENTUALLY
+fnames = [1 3]; %MAKE MORE FLEXIBLE-> NEED TO BATCH PROCESS EVENTUALLY
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
-%find images and
-cd(['D:\BRUKER\',date])
-folderList = dir(['*TSeries*']); % EVENTUALLY WILL NEED TO EXAMINE MARKPOINTS AS WELL
+%find image location
+folderList = gettargetFolders2(['D:\',datatype,'\',date],date,fnames);
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
 for k = 1:length(folderList)
-    folderListNames(k) = str2double(folderList(k).name(end-2:end));
-end
-[~,targetFolders]=ismember(fnames,folderListNames);
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%
-for k = targetFolders
-
     tic;
-
-    cd(['D:\BRUKER\',date,'\',folderList(k).name]);
+    cd(['D:\',datatype,'\',folderList(k).name]);
     fileList = dir('*.tif');
     mkdir('Registered\Channel1');
     mkdir('Registered\Channel2');
+    outputDir = [cd,'\Registered'];
     outputDirCh1 = [cd,'\Registered\Channel1'];
     outputDirCh2 = [cd,'\Registered\Channel2'];
 
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %read in some metadata
+    [imgInfo,fileList] = getmetadata(datatype,fileList,folderList(k).name,useCh2template);
+
     %check to see if single images saved or stacks of images. assuming that
     %there would never be 100 stacks. (e.g. SI set to save stacks of 100 images)
-    if length(fileList)>1000 
+    if length(fileList)>1000
         singleimages = 1;
     else
         singleimages = 0;
@@ -61,46 +58,9 @@ for k = targetFolders
         imgStack = ScanImageTiffReader(fileList(1).name).data;
     end
 
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %read in some metadata
-    imgInfo = [];
-    if strcmp(datatype,'BRUKER')
-        %NEED TO ADD HERE -> CHANNELS, Fs, ZOOM, ROIs  READ XML      
-        %if useCh2template??
-    elseif strcmp(datatype,'SI')
-        % NOTE- HAVE NOT EDITED THIS CODE YET
-        metadata=ScanImageTiffReader([fileName,'/',files(1).name]).metadata;
-        meta = regexp(metadata,'[\w\.]+','match');
-        desc = [];
-        %check if there 2 channels saved
-        loc = find(ismember(meta, 'SI.hChannels.channelSave'));
-        if str2double(meta{loc+2})==2
-            disp 'found red channel (2)'
-            useCh2template = 1;
-        else
-            useCh2template = 0;
-            disp 'no red channel'
-        end
-        %check how many ROIs there (and if mROI imaging)
-        loc = find(ismember(meta, 'scanimage.mroi.Roi'));
-        numROIs = length(loc);
-        desc.numROIs = numROIs;
-        if numROIs>1
-            disp 'mROI imaging detected'
-        end
-        %framerate
-        loc = find(ismember(meta, 'SI.hRoiManager.scanFrameRate'));
-        desc.framerate = str2double(meta(loc+1));
-        %Zoom angle
-        loc = find(ismember(meta, 'SI.hRoiManager.scanZoomFactor'));
-        desc.zoom = str2double(meta(loc+1));
-        %is there a Ch2?
-        if useCh2template
-            imgStack = imgStack(:,:,2:2:end);
-        end
-    else
-        disp 'no type'
-    end
+    [sizeX,sizeY,~] = size(imgStack);
+    imgInfo.sizeX = sizeX;
+    imgInfo.sizeY = sizeY;
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%
     % generate a template using brightest images
@@ -116,7 +76,7 @@ for k = targetFolders
     %begin working files
 
     if singleimages==1
-        BatchSize = 500;
+        BatchSize = 1000;
         batches={};
         for j = 1:ceil(length(fileList)/BatchSize)
             if j~=ceil(length(fileList)/BatchSize)
@@ -176,30 +136,28 @@ for k = targetFolders
         %save([fileName '\Registered\desc'],'desc') %FIX/UPDATE
 
         %save images outputDir
-        filenameCh1 = [outputDirCh1 '\' sprintf('%06i', 1 ) '.tif'];
-        filenameCh2 = [outputDirCh2 '\' sprintf('%06i', 1 ) '.tif'];
+        filenameCh1 = [outputDirCh1 '\' sprintf('%06i', j ) '.tiff'];
+        filenameCh2 = [outputDirCh2 '\' sprintf('%06i', j ) '.tiff'];
+        for frmn = 1:size(imgStack,3)
 
-        for frmn = 1:size(imgStack,3) %j = 1
-
-            if batches{j}(frmn) == 1
-
+            if frmn == 1
                 if useCh2template
-                    imwrite(uint16(ch1Stack(:,:,frmn))',filenameCh1,'tif','write','overwrite');
-                    imwrite(uint16(imgStack(:,:,frmn))',filenameCh2,'tif','write','overwrite');
+                    imwrite(uint16(ch1Stack(:,:,frmn))',filenameCh1,'tif','write','overwrite','compression','none')
+                    imwrite(uint16(imgStack(:,:,frmn))',filenameCh2,'tif','write','overwrite','compression','none')
                 else
-                    imwrite(uint16(imgStack(:,:,frmn))',filenameCh1,'tif','write','overwrite');
+                    imwrite(uint16(imgStack(:,:,frmn))',filenameCh1,'tif','write','overwrite','compression','none')
                 end
-
             else
                 if useCh2template
-                    imwrite(uint16(ch1Stack(:,:,frmn))',filenameCh1,'tif','write','append');
-                    imwrite(uint16(imgStack(:,:,frmn))',filenameCh2,'tif','write','append');
+                    imwrite(uint16(ch1Stack(:,:,frmn))',filenameCh1,'tif','write','append','compression','none')
+                    imwrite(uint16(imgStack(:,:,frmn))',filenameCh2,'tif','write','append','compression','none')
                 else
-                    imwrite(uint16(imgStack(:,:,frmn))',filenameCh1,'tif','write','append');
+                    imwrite(uint16(imgStack(:,:,frmn))',filenameCh1,'tif','write','append','compression','none')
                 end
             end
         end
     end
+    save([outputDir,'\imgInfo'],'imgInfo')
     toc;
 end
 delete(gcp)

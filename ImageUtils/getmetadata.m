@@ -1,7 +1,7 @@
 % function getmetadata
 % example:
 %  [imgInfo] = getmetadata(datatype,fileList,folderList(k).name)
-% note: Bruker and SI save channel 2 images different. SI interleaves in
+% note: Bruker and SI save channel 2 images differently. SI interleaves in
 % image stack. Bruker saves individual images and they are ordered by name
 % (starting with Ch1 i.e. red).
 
