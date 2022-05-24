@@ -23,11 +23,11 @@ fnames = [1 3]; %MAKE MORE FLEXIBLE-> NEED TO BATCH PROCESS EVENTUALLY
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 %find image location
-folderList = gettargetFolders(['D:\',datatype,'\',date],fnames);
+folderList = gettargetFolders2(['D:\',datatype,'\',date],date,fnames);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 for k = 1:length(folderList)
     tic;
-    cd(['D:\',datatype,'\',date,'\',folderList(k).name]);
+    cd(['D:\',datatype,'\',folderList(k).name]);
     fileList = dir('*.tif');
     mkdir('Registered\Channel1');
     mkdir('Registered\Channel2');

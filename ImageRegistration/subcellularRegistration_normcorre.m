@@ -23,11 +23,11 @@ date = '02232022';
 fnames = [2 4 5]; 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 %find image location
-folderList = gettargetFolders(['D:\',datatype,'\',date],fnames);
+folderList = gettargetFolders2(['D:\',datatype],date,fnames);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 for k = 1:length(folderList)
 
-    cd(['D:\',datatype,'\',date,'\',folderList(k).name]);
+    cd(['D:\',datatype,'\',folderList(k).name]);
     fileList = dir('*.tif');
     mkdir('Registered\Channel1');
     mkdir('Registered\Channel2');
