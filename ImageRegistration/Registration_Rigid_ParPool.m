@@ -104,7 +104,7 @@ for k = 1:length(folderList)
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%
     %begin working files
-    for j = 1:length(batches)
+    parfor j = 1:length(batches)
 
         %build stack
         imgStack = [];

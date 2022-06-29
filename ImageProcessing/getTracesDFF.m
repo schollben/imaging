@@ -11,7 +11,7 @@
 
 %%initialize params
 date = '06172022';
-filenum = 2;
+filenum = 1;
 datatype = 'BRUKER';            %BRUKER or SI 
 saveLocation = 'D:\processed\'; %might change depending on machine
 doNeuropil = 0;                 %extract neuropil signal for subtraction?
@@ -158,18 +158,18 @@ for k = 1:length(folderList)
         end
         toc
 
-        %%%%%%%%%%%
-        disp 'stimulus and two-photon frame times'
-        %%
-        if strcmp(datatyfilenamepe,'BRUKER')
-
-            filename = 'TSeries-06172022-0138-002_Cycle00001_VoltageRecording_001.csv '; 
-            
-            M = csvread(filename,2,1); %first row frame times, second row stimulus triggers
-        end
-
-        %%
-        %%%%%%%%%%%
+%         %%%%%%%%%%%
+%         disp 'stimulus and two-photon frame times'
+%         %%
+%         if strcmp(datatyfilenamepe,'BRUKER')
+% 
+%             filename = 'TSeries-06172022-0138-002_Cycle00001_VoltageRecording_001.csv '; 
+%             
+%             M = csvread(filename,2,1); %first row frame times, second row stimulus triggers
+%         end
+% 
+%         %%
+%         %%%%%%%%%%%
         %dendritic substraction
         %argin = 1 - use full trace for subtraction
         %argin = 2 - use stimuli ('stimulus duration' periods)
