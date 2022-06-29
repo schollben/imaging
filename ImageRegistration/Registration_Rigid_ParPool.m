@@ -19,12 +19,12 @@ datatype = 'BRUKER'; %BRUKER or SI - (SI uses bigtiffreader and file names are d
 %data location and folder(s)
 %BRUKER files are MarkPoints or SingleImage or TSeries
 %SI files are user-defined names
-date = '02232022';
-fnames = [1 3];
+date = '06142022';
+fnames = [1];
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 %find image location
-folderList = gettargetFolders2(['D:\',datatype,'\',date],date,fnames);
+folderList = gettargetFolders2(['D:\',datatype],date,fnames);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 for k = 1:length(folderList)
     tic;
@@ -104,7 +104,7 @@ for k = 1:length(folderList)
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%
     %begin working files
-    parfor j = 1:length(batches)
+    for j = 1:length(batches)
 
         %build stack
         imgStack = [];
@@ -135,13 +135,14 @@ for k = 1:length(folderList)
         if useCh2template
             ch1Stack = imgStack(:,:,1:2:end);
             imgStack = imgStack(:,:,2:2:end);
+        else
+            ch1Stack = [];
         end
         [height,width,depth] = size(imgStack);
 
         %%%%%%%%%%%%%%%%%%%%%%%%%%%
-
         %%begin working files
-        [imgStack,ch1Stack]=rigidReg(imgStack,template,ChunkProcess,useCh2template,downsampleRates,maxMovement);
+        [imgStack,ch1Stack]=rigidReg(imgStack,ch1Stack,template,ChunkProcess,useCh2template,downsampleRates,maxMovement);
 
         %%%%%%%%%%%%%%%%%%%%%%%%%%%
         %save images outputDir

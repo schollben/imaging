@@ -139,7 +139,7 @@ for k = 1:length(folderList)
         %%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%begin working files
         [imgStack,ch1Stack]=rigidReg(imgStack,ch1Stack,template,ChunkProcess,useCh2template,downsampleRates,maxMovement);
-        
+     
         %%%%%%%%%%%%%%%%%%%%%%%%%%%
         %save images outputDir
         for frmn = 1:size(imgStack,3)

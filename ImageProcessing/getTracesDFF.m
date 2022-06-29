@@ -10,8 +10,8 @@
 %%%%%%%%%%%%%%%%%%%%%%
 
 %%initialize params
-date = '02232022';
-filenum = 1;
+date = '06172022';
+filenum = 2;
 datatype = 'BRUKER';            %BRUKER or SI 
 saveLocation = 'D:\processed\'; %might change depending on machine
 doNeuropil = 0;                 %extract neuropil signal for subtraction?
@@ -113,11 +113,11 @@ for k = 1:length(folderList)
 
         %reg data folder location
         cd([cd,'\Channel1'])
-        fileList = dir('*.tiff');
+        fileList = dir('*.tif');
         
         %%%%%%%%%%%
         %go through tiff stacks
-        disp 'load stacks amd extract traces...'
+        disp 'load stacks amd extract traces'
         for ff = 1:length(fileList)
             
             imgstack = ScanImageTiffReader(fileList(ff).name).data; fprintf('.') % < 1 sec per 1000 frame stack
@@ -146,6 +146,7 @@ for k = 1:length(folderList)
         %%%%%%%%%%%
         disp 'calculate df/f for all ROIs - downsampled 4x'
         for cc = 1:length(ce)
+            ce(cc).raw(1:60) = nan; %Bruker scope initial images are messed up
             dff = filterBaseline_dFcomp2(resample( ce(cc).raw , 1 , 4));
             ce(cc).dff = dff;
         end
@@ -158,17 +159,30 @@ for k = 1:length(folderList)
         toc
 
         %%%%%%%%%%%
+        disp 'stimulus and two-photon frame times'
+        %%
+        if strcmp(datatyfilenamepe,'BRUKER')
+
+            filename = 'TSeries-06172022-0138-002_Cycle00001_VoltageRecording_001.csv '; 
+            
+            M = csvread(filename,2,1); %first row frame times, second row stimulus triggers
+        end
+
+        %%
+        %%%%%%%%%%%
         %dendritic substraction
         %argin = 1 - use full trace for subtraction
-        %argin = 2 - use stimuli ('cyc' periods)
+        %argin = 2 - use stimuli ('stimulus duration' periods)
         DendriteSubtraction(1)
 
         %neuropil subtraction - TO ADD
         
         %save
+        disp saving
         save([saveLocation,folderList(k).name,'.mat'],'ce','-mat','-v7.3')
+    else
+        disp 'no ROI.zip file or imgInfo mat file'
     end
-    disp 'no ROI.zip file or imgInfo mat file'
 end
 disp finished
 

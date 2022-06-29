@@ -15,6 +15,8 @@ else
     dendcnt = 1;
 end
 
+isDendrite = find(isDendrite);
+
 for cc = 1:length(ce)
 
     if ce(cc).dendrite

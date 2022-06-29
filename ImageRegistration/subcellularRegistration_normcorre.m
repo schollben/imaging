@@ -20,8 +20,8 @@ datatype = 'BRUKER'; %BRUKER or SI
 %data location and folder(s)
 %BRUKER files are MarkPoints or SingleImage or TSeries
 %SI files are user-defined names
-date = '02232022';
-fnames = [2 4 5]; 
+date = '06062022'; 
+fnames = [3]; 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 %find image location
 folderList = gettargetFolders2(['D:\',datatype],date,fnames);
