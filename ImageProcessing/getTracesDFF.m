@@ -11,7 +11,8 @@
 
 %%initialize params
 date = '06172022';
-filenum = 1;
+filenum = 2;
+stimulusfile = 2;               %set to -1 if there is no stimulus presented
 datatype = 'BRUKER';            %BRUKER or SI 
 saveLocation = 'D:\processed\'; %might change depending on machine
 doNeuropil = 0;                 %extract neuropil signal for subtraction?
@@ -65,8 +66,7 @@ for k = 1:length(folderList)
 
             nmCoord = sROI{cc}.mnCoordinates;
 
-            if strcmp(sROI{cc}.strType,'PolyLine')
-                %dendrite ROI
+            if strcmp(sROI{cc}.strType,'PolyLine') %DENDRITE ROI
                 mask2d = genPolyLineROI(nmCoord,sROI{cc}.nStrokeWidth);
             else
                 mask2d = inpolygon( x, y, nmCoord(:,1), nmCoord(:,2));
@@ -81,7 +81,7 @@ for k = 1:length(folderList)
             ce(cc).mask2d = sparse(mask2d);
             ce(cc).date = date;
             ce(cc).file = filenum;
-            ce(cc).framePeriod = imgInfo.framePeriod;
+            ce(cc).framePeriod = str2double(imgInfo.framePeriod);
             ce(cc).opticalZoom = imgInfo.opticalZoom;
 
             ce(cc).soma = (strcmp(sROI{cc}.strType,'Freehand') | strcmp(sROI{cc}.strType,'Oval')) ...
@@ -97,7 +97,7 @@ for k = 1:length(folderList)
             ce(cc).depth = [];                                  %imgInfo.Zdepth; %distance from surface
             ce(cc).img = [];
 
-            ce(cc).scale = 1 / imgInfo.micronsPerPixel(1);      % pixels per micron -> need to add for SI
+            ce(cc).scale = 1 / imgInfo.micronsPerPixel(1);      % pixels per micron -> NEED TO ADD FOR SCANIMAGE DATA
             ce(cc).raw = [];
             ce(cc).raw_neuropil = [];
             
@@ -116,11 +116,11 @@ for k = 1:length(folderList)
         fileList = dir('*.tif');
         
         %%%%%%%%%%%
-        %go through tiff stacks
-        disp 'load stacks amd extract traces'
+        %go through TIFF stacks
+        disp 'load stacks and extract traces'
         for ff = 1:length(fileList)
             
-            imgstack = ScanImageTiffReader(fileList(ff).name).data; fprintf('.') % < 1 sec per 1000 frame stack
+            imgstack = ScanImageTiffReader(fileList(ff).name).data; fprintf('.') % <1 sec per 1000 frame stack
 
             for cc = 1:numCells
                 ftrace = mean( reshape (imgstack(  maskstruct(cc).mask(:,:,1:size(imgstack,3)) ), length(find(ce(cc).mask2d)) , size(imgstack,3) , 1));
@@ -135,9 +135,8 @@ for k = 1:length(folderList)
             end
 
             %save sample image
-            %only added to ce(1)
-            if ff == 1
-                ce(cc).img = squeeze(mean(imgstack,3));
+            if ff==1
+                ce(1).img = squeeze(mean(imgstack,3))';
             end
             fprintf('.')
         end
@@ -153,23 +152,72 @@ for k = 1:length(folderList)
 
         if doNeuropil
             %calculate df/f for neuropil trace
-            dff = filterBaseline_dFcomp2 (resample( ce(cc).raw_neuropil , 1 , 4));
+            dff = filterBaseline_dFcomp2(resample( ce(cc).raw_neuropil , 1 , 4));
             ce(cc).dff_neuropil = dff;
         end
         toc
 
-%         %%%%%%%%%%%
-%         disp 'stimulus and two-photon frame times'
-%         %%
-%         if strcmp(datatyfilenamepe,'BRUKER')
-% 
-%             filename = 'TSeries-06172022-0138-002_Cycle00001_VoltageRecording_001.csv '; 
-%             
-%             M = csvread(filename,2,1); %first row frame times, second row stimulus triggers
-%         end
-% 
-%         %%
-%         %%%%%%%%%%%
+        %%%%%%%%%%%
+        
+        disp 'grabbing two-photon frame times'
+        if strcmp(datatype,'BRUKER')
+
+            %get voltage recording (need to change to sample TTLs at 10kHz)
+            cd(['D:\',datatype,'\',folderList(k).name,'\'])
+            voltageFiles = dir('*.csv');
+            if length(voltageFiles)>1
+                disp 'why is there multiple voltage files??'
+            else
+                VoltageRecording_filename = voltageFiles(1).name;
+            end
+            Vrec = csvread(VoltageRecording_filename,2,1); %first row frame times, second row stimulus triggers
+
+            frameTriggers = find(Vrec(:,1) < 0.5);
+            if frameTriggers(1) > 34 %(in ms)
+                disp 'first 2p frame was dropped!'
+            end
+            [frameTriggers] = replaceMissingFrameTriggers(frameTriggers);
+            ce(1).frameTriggers = frameTriggers;
+        end
+        
+        disp 'stimulus times and sync with two-photon'
+        if size(Vrec,2)>1 && stimulusfile>-1
+
+            stimulusTriggers = Vrec(:,2);
+            stimulusTriggers(stimulusTriggers<0) = 0;
+            stimulusTriggers = diff(stimulusTriggers);
+            stimOn = find(stimulusTriggers>0);
+            ce(1).stimOn = stimOn;
+
+            cd(['D:\Pyschopy\',date(5:end),'-',date(1:2),'-',date(3:4)])
+            pschopyFile = readmatrix(['file',sprintf('%03d',stimulusfile),'.txt']);
+
+            stimID = pschopyFile(:,1);
+            ce(1).stimID = stimID;
+            uniqStims = unique(stimID);
+            ce(1).uniqStims = uniqStims;
+            ce(1).stimProperties = pschopyFile(:,2:end);
+
+            if length(stimOn)~=length(stimID)
+                disp 'mismatch between number of stimulus triggers and stimuli IDs'
+            end
+
+            %get stimOn2pFrame
+            stimOn2pFrame = [];
+            for ss = 1:length(stimOn)
+                pre = frameTriggers(frameTriggers < stimOn(ss));
+                pre = pre(end);
+                stimOn2pFrame(ss) = pre;
+                frameTriggers(frameTriggers < pre) = [];
+            end
+            ce(1).stimOn2pFrame = stimOn2pFrame;
+
+        else
+            disp 'no stimulus triggers recorded'
+        end
+
+        
+        %%%%%%%%%%%
         %dendritic substraction
         %argin = 1 - use full trace for subtraction
         %argin = 2 - use stimuli ('stimulus duration' periods)
