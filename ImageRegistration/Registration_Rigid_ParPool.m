@@ -146,8 +146,8 @@ for k = 1:length(folderList)
 
         %%%%%%%%%%%%%%%%%%%%%%%%%%%
         %save images outputDir
-        filenameCh1 = [outputDirCh1 '\' sprintf('%06i', j ) '.tiff'];
-        filenameCh2 = [outputDirCh2 '\' sprintf('%06i', j ) '.tiff'];
+        filenameCh1 = [outputDirCh1 '\' sprintf('%06i', j ) '.tif'];
+        filenameCh2 = [outputDirCh2 '\' sprintf('%06i', j ) '.tif'];
         for frmn = 1:size(imgStack,3)
 
             if frmn == 1

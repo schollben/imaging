@@ -144,22 +144,22 @@ for k = 1:length(folderList)
         %save images outputDir
         for frmn = 1:size(imgStack,3)
 
-            filenameCh1 = [outputDirCh1 '\' sprintf('%06i',j) '.tiff'];
-            filenameCh2 = [outputDirCh2 '\' sprintf('%06i',j) '.tiff'];
+            filenameCh1 = [outputDirCh1 '\' sprintf('%06i',j) '.tif'];
+            filenameCh2 = [outputDirCh2 '\' sprintf('%06i',j) '.tif'];
 
             if frmn == 1
                 if useCh2template
                     imwrite(uint16(ch1Stack(:,:,frmn))',filenameCh1,'tif','write','overwrite','compression','none')
-                    imwrite(uint16(imgStack(:,:,frmn))',filenameCh2,'tiff','write','overwrite','compression','none')
+                    imwrite(uint16(imgStack(:,:,frmn))',filenameCh2,'tif','write','overwrite','compression','none')
                 else
-                    imwrite(uint16(imgStack(:,:,frmn))',filenameCh1,'tiff','write','overwrite','compression','none')
+                    imwrite(uint16(imgStack(:,:,frmn))',filenameCh1,'tif','write','overwrite','compression','none')
                 end
             else
                 if useCh2template
-                    imwrite(uint16(ch1Stack(:,:,frmn))',filenameCh1,'tiff','write','append','compression','none')
-                    imwrite(uint16(imgStack(:,:,frmn))',filenameCh2,'tiff','write','append','compression','none')
+                    imwrite(uint16(ch1Stack(:,:,frmn))',filenameCh1,'tif','write','append','compression','none')
+                    imwrite(uint16(imgStack(:,:,frmn))',filenameCh2,'tif','write','append','compression','none')
                 else
-                    imwrite(uint16(imgStack(:,:,frmn))',filenameCh1,'tiff','write','append','compression','none')
+                    imwrite(uint16(imgStack(:,:,frmn))',filenameCh1,'tif','write','append','compression','none')
                 end
             end
         end
