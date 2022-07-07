@@ -10,9 +10,9 @@
 %%%%%%%%%%%%%%%%%%%%%%
 
 %%initialize params
-date = '06172022';
-filenum = 2;
-stimulusfile = 2;               %set to -1 if there is no stimulus presented
+date = '07052022';
+filenum = 1;
+stimulusfile = 17;               %set to -1 if there is no stimulus presented
 datatype = 'BRUKER';            %BRUKER or SI 
 saveLocation = 'D:\processed\'; %might change depending on machine
 doNeuropil = 0;                 %extract neuropil signal for subtraction?
@@ -158,11 +158,11 @@ for k = 1:length(folderList)
         toc
 
         %%%%%%%%%%%
-        
+        %%
         disp 'grabbing two-photon frame times'
         if strcmp(datatype,'BRUKER')
 
-            %get voltage recording (need to change to sample TTLs at 10kHz)
+            %get voltage recording (10kHz sampling)
             cd(['D:\',datatype,'\',folderList(k).name,'\'])
             voltageFiles = dir('*.csv');
             if length(voltageFiles)>1
@@ -172,25 +172,27 @@ for k = 1:length(folderList)
             end
             Vrec = csvread(VoltageRecording_filename,2,1); %first row frame times, second row stimulus triggers
 
-            frameTriggers = find(Vrec(:,1) < 0.5);
-            if frameTriggers(1) > 34 %(in ms)
+            frameTriggers = [0 ; find(diff(Vrec(:,1)) < -4)]; %first frame starts at 0?
+            if frameTriggers(2) > 340 %(in 0.1 ms)
                 disp 'first 2p frame was dropped!'
             end
             [frameTriggers] = replaceMissingFrameTriggers(frameTriggers);
-            ce(1).frameTriggers = frameTriggers;
+            ce(1).frameTriggers = floor(frameTriggers / 10); % change 1kHz sampling
         end
-        
+        %%
         disp 'stimulus times and sync with two-photon'
         if size(Vrec,2)>1 && stimulusfile>-1
 
-            stimulusTriggers = Vrec(:,2);
+            stimulusTriggers = resamplevec(Vrec(:,2),.1); %downsample to 1kHz
             stimulusTriggers(stimulusTriggers<0) = 0;
             stimulusTriggers = diff(stimulusTriggers);
-            stimOn = find(stimulusTriggers>0);
+            stimOn = find(stimulusTriggers > 0);
             ce(1).stimOn = stimOn;
+            stimOff = find(stimulusTriggers < 0);
+            ce(1).stimOff = stimOff;
 
             cd(['D:\Pyschopy\',date(5:end),'-',date(1:2),'-',date(3:4)])
-            pschopyFile = readmatrix(['file',sprintf('%03d',stimulusfile),'.txt']);
+            pschopyFile = readmatrix(['T',sprintf('%03d',stimulusfile),'.txt']);
 
             stimID = pschopyFile(:,1);
             ce(1).stimID = stimID;
@@ -210,12 +212,14 @@ for k = 1:length(folderList)
                 stimOn2pFrame(ss) = pre;
                 frameTriggers(frameTriggers < pre) = [];
             end
-            ce(1).stimOn2pFrame = stimOn2pFrame;
+            ce(1).stimOn2pFrame = floor(stimOn2pFrame ./ (1 / ce(1).framePeriod));
+
+            %%%%%%%%%%%%%%%%%
 
         else
             disp 'no stimulus triggers recorded'
         end
-
+%%
         
         %%%%%%%%%%%
         %dendritic substraction
