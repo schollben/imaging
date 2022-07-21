@@ -10,9 +10,9 @@
 %%%%%%%%%%%%%%%%%%%%%%
 
 %%initialize params
-date = '07052022';
+date = '07142022';
 filenum = 1;
-stimulusfile = 17;               %set to -1 if there is no stimulus presented
+stimulusfile = 1;               %set to -1 if there is no stimulus presented
 datatype = 'BRUKER';            %BRUKER or SI 
 saveLocation = 'D:\processed\'; %might change depending on machine
 doNeuropil = 0;                 %extract neuropil signal for subtraction?
@@ -145,20 +145,22 @@ for k = 1:length(folderList)
         %%%%%%%%%%%
         disp 'calculate df/f for all ROIs - downsampled 4x'
         for cc = 1:length(ce)
-            ce(cc).raw(1:60) = nan; %Bruker scope initial images are messed up
-            dff = filterBaseline_dFcomp2(resample( ce(cc).raw , 1 , 4));
+            ce(cc).raw(1:30) = nan; %Bruker scope initial images are messed up
+%             dff = filterBaseline_dFcomp2(resample(ce(cc).raw,1,4));
+            dff = filterBaseline_dFcomp2(ce(cc).raw,99*4);
             ce(cc).dff = dff;
         end
 
         if doNeuropil
             %calculate df/f for neuropil trace
-            dff = filterBaseline_dFcomp2(resample( ce(cc).raw_neuropil , 1 , 4));
+%             dff = filterBaseline_dFcomp2(resample( ce(cc).raw_neuropil , 1 , 4));
+            dff = filterBaseline_dFcomp2(ce(cc).raw_neuropil);
             ce(cc).dff_neuropil = dff;
         end
         toc
 
         %%%%%%%%%%%
-        %%
+        
         disp 'grabbing two-photon frame times'
         if strcmp(datatype,'BRUKER')
 
@@ -172,25 +174,27 @@ for k = 1:length(folderList)
             end
             Vrec = csvread(VoltageRecording_filename,2,1); %first row frame times, second row stimulus triggers
 
-            frameTriggers = [0 ; find(diff(Vrec(:,1)) < -4)]; %first frame starts at 0?
-            if frameTriggers(2) > 340 %(in 0.1 ms)
+            frameTriggers = find(diff(Vrec(:,1)) < -4); %first frame starts at 0?
+            if frameTriggers(1) > 340 %(in 0.1 ms)
                 disp 'first 2p frame was dropped!'
             end
             [frameTriggers] = replaceMissingFrameTriggers(frameTriggers);
-            ce(1).frameTriggers = floor(frameTriggers / 10); % change 1kHz sampling
+
+            ce(1).frameTriggers = frameTriggers;
         end
-        %%
+        
         disp 'stimulus times and sync with two-photon'
         if size(Vrec,2)>1 && stimulusfile>-1
 
-            stimulusTriggers = resamplevec(Vrec(:,2),.1); %downsample to 1kHz
+%             stimulusTriggers = resamplevec(Vrec(:,2),.1); %downsample to 1kHz
+            stimulusTriggers = Vrec(:,2);
             stimulusTriggers(stimulusTriggers<0) = 0;
             stimulusTriggers = diff(stimulusTriggers);
-            stimOn = find(stimulusTriggers > 0);
+            [~,stimOn]=findpeaks(stimulusTriggers,'MinPeakDistance',500);
             ce(1).stimOn = stimOn;
-            stimOff = find(stimulusTriggers < 0);
+            [~,stimOff]=findpeaks(-stimulusTriggers,'MinPeakDistance',500);
             ce(1).stimOff = stimOff;
-
+            
             cd(['D:\Pyschopy\',date(5:end),'-',date(1:2),'-',date(3:4)])
             pschopyFile = readmatrix(['T',sprintf('%03d',stimulusfile),'.txt']);
 
@@ -204,22 +208,21 @@ for k = 1:length(folderList)
                 disp 'mismatch between number of stimulus triggers and stimuli IDs'
             end
 
-            %get stimOn2pFrame
+            %get stimOn2pFrame (frame where stimulus occured)
             stimOn2pFrame = [];
             for ss = 1:length(stimOn)
-                pre = frameTriggers(frameTriggers < stimOn(ss));
-                pre = pre(end);
-                stimOn2pFrame(ss) = pre;
-                frameTriggers(frameTriggers < pre) = [];
+                [~,frameloc] = min(abs(stimOn(ss)-frameTriggers));
+                stimOn2pFrame(ss) = frameloc;
             end
-            ce(1).stimOn2pFrame = floor(stimOn2pFrame ./ (1 / ce(1).framePeriod));
+
+            ce(1).stimOn2pFrame = stimOn2pFrame;
 
             %%%%%%%%%%%%%%%%%
 
         else
             disp 'no stimulus triggers recorded'
         end
-%%
+
         
         %%%%%%%%%%%
         %dendritic substraction
