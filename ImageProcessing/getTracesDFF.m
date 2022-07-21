@@ -10,9 +10,9 @@
 %%%%%%%%%%%%%%%%%%%%%%
 
 %%initialize params
-date = '07142022';
-filenum = 1;
-stimulusfile = 1;               %set to -1 if there is no stimulus presented
+date = '06172022';
+filenum = 2;
+stimulusfile = 2;               %set to -1 if there is no stimulus presented
 datatype = 'BRUKER';            %BRUKER or SI 
 saveLocation = 'D:\processed\'; %might change depending on machine
 doNeuropil = 0;                 %extract neuropil signal for subtraction?
@@ -196,13 +196,13 @@ for k = 1:length(folderList)
             ce(1).stimOff = stimOff;
             
             cd(['D:\Pyschopy\',date(5:end),'-',date(1:2),'-',date(3:4)])
-            pschopyFile = readmatrix(['T',sprintf('%03d',stimulusfile),'.txt']);
+            pyschopyFile = readmatrix(['T',sprintf('%03d',stimulusfile),'.txt']);
 
-            stimID = pschopyFile(:,1);
+            stimID = pyschopyFile(:,1);
             ce(1).stimID = stimID;
             uniqStims = unique(stimID);
             ce(1).uniqStims = uniqStims;
-            ce(1).stimProperties = pschopyFile(:,2:end);
+            ce(1).stimProperties = pyschopyFile(:,2:end);
 
             if length(stimOn)~=length(stimID)
                 disp 'mismatch between number of stimulus triggers and stimuli IDs'

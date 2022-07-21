@@ -7,8 +7,8 @@ mperiod = median(diff(frameTrigs));
 
 for k = 2:length(frameTrigs)
     
-    if (frameTrigs(k)-frameTrigs(k-1) > (mperiod + mperiod/4))
-        newFrameTrigs = [newFrameTrigs; (frameTrigs(k-1) + mperiod)];
+    if frameTrigs(k)-frameTrigs(k-1) > (mperiod + mperiod/2) && (frameTrigs(k)-frameTrigs(k-1) < 2*mperiod + mperiod/2))
+        newFrameTrigs = [newFrameTrigs; frameTrigs(k-1) + mperiod];
     end
         
     newFrameTrigs = [newFrameTrigs; frameTrigs(k) + 0];
