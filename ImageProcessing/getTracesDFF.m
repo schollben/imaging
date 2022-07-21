@@ -143,7 +143,7 @@ for k = 1:length(folderList)
         toc
 
         %%%%%%%%%%%
-        disp 'calculate df/f for all ROIs - downsampled 4x'
+        disp 'calculate df/f for all ROIs'
         for cc = 1:length(ce)
             ce(cc).raw(1:30) = nan; %Bruker scope initial images are messed up
 %             dff = filterBaseline_dFcomp2(resample(ce(cc).raw,1,4));
