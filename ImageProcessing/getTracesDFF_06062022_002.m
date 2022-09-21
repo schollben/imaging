@@ -10,9 +10,9 @@
 %%%%%%%%%%%%%%%%%%%%%%
 
 %%initialize params
-date = '08282022';
+date = '06062022';
 filenum = 2;
-stimulusfile = 6;               %set to -1 if there is no stimulus presented
+stimulusfile = 2;               %set to -1 if there is no stimulus presented
 datatype = 'BRUKER';            %BRUKER or SI 
 saveLocation = 'D:\processed\'; %might change depending on machine
 doNeuropil = 0;                 %extract neuropil signal for subtraction?
@@ -113,7 +113,7 @@ for k = 1:length(folderList)
 
         %reg data folder location
         cd([cd,'\Channel1'])
-        fileList = dir('*.tif');
+        fileList = dir('*.tiff');
         
         %%%%%%%%%%%
         %go through TIFF stacks
@@ -174,17 +174,17 @@ for k = 1:length(folderList)
             end
             Vrec = csvread(VoltageRecording_filename,2,1); %first row frame times, second row stimulus triggers
 
-            frameTriggers = find(diff(Vrec(:,1)) < -4); %first frame starts at 0?
+            frameTriggers = find(diff(Vrec(:,1)) < -0.4); %first frame starts at 0?
             if frameTriggers(1) > 340 %(in 0.1 ms)
                 disp 'first 2p frame was dropped!'
             end
+
+            frameTriggers(diff(frameTriggers) < 30) = [];
+
             [frameTriggers] = replaceMissingFrameTriggers(frameTriggers);
 
+            
             ce(1).frameTriggers = frameTriggers;
-
-        elseif strcmp(datatype,'SCANIMAGE')
-            %.h5 files from wavesurfer
-
         end
         
         disp 'stimulus times and sync with two-photon'
@@ -201,6 +201,8 @@ for k = 1:length(folderList)
             
             cd(['D:\Pyschopy\',date(5:end),'-',date(1:2),'-',date(3:4)])
             pyschopyFile = readmatrix(['T',sprintf('%03d',stimulusfile),'.txt']);
+
+            pyschopyFile(1,:) = []; %LOST FIRST TTL PULSE
 
             stimID = pyschopyFile(:,1);
             ce(1).stimID = stimID;

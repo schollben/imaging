@@ -15,7 +15,7 @@ op = 32; %grid overlap
 %see more NormCorre parameters below
 doimagSpatSamp = 0; %flag to use 0.5x downsampling
 useCh2template = 0; %use Ch2 for registering (red/structural)
-datatype = 'BRUKER'; %BRUKER or SI
+datatype = 'SCANIMAGE'; %BRUKER or SCANIMAGE
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 %data location and folder(s)
 %BRUKER files are MarkPoints or SingleImage or TSeries
@@ -24,6 +24,7 @@ date = '06062022';
 fnames = [3]; 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 %find image location
+organizeFiles(fnames,datatype,date) 
 folderList = gettargetFolders2(['D:\',datatype],date,fnames);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 for k = 1:length(folderList)

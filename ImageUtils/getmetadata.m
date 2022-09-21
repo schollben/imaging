@@ -24,7 +24,7 @@ if strcmp(datatype,'BRUKER')
         disp 'no red channel'
     end
 
-elseif strcmp(datatype,'SI')
+elseif strcmp(datatype,'SCANIMAGE')
 
     % NOTE- HAVE NOT EDITED THIS CODE YET
 

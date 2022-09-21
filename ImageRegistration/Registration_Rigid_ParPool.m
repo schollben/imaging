@@ -10,21 +10,23 @@ parpool
 %% initialize params
 downsampleRates = [1/16 1/8 1/4 1/2 1];
 maxMovement = 1/8;
-ChunkProcess = 100; %flag to apply shifts across batches of images
+ChunkProcess = 0; %flag to apply shifts across batches of images
 doimagSpatSamp = 0; %flag to use 0.5x downsampling
 useCh2template = 0; %use Ch2 for registering (red/structural)
-datatype = 'BRUKER'; %BRUKER or SI - (SI uses bigtiffreader and file names are different)
+datatype = 'BRUKER'; %BRUKER or SCANIMAGE - (SCANIMAGE uses bigtiffreader and file names are different)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 %data location and folder(s)
 %BRUKER files are MarkPoints or SingleImage or TSeries
-%SI files are user-defined names
-date = '07142022';
-fnames = [1];
+%SCANIMAGE files are user-defined names - currently set as 'TSeries'
+date = '08282022';
+fnames = [2];
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
-%find image location
+%%find image location
+organizeFiles(fnames,datatype,date) 
 folderList = gettargetFolders2(['D:\',datatype],date,fnames);
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 for k = 1:length(folderList)
     tic;

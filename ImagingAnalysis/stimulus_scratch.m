@@ -1,4 +1,7 @@
-%stimulus information 
+
+function genstimcyc(stimDur,prestim,poststim)
+
+stimulus information 
 prestimPeriod = 0;    
 stimDur = 2; % 4SEC for annulus!
 postPeriod = 1;  
