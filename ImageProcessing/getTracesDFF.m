@@ -12,10 +12,12 @@
 %%initialize params
 date = '08282022';
 filenum = 2;
-stimulusfile = 6;               %set to -1 if there is no stimulus presented
-datatype = 'BRUKER';            %BRUKER or SI 
+stimulusfile = 6;            %set to -1 if there is no stimulus presented (not needed for SCANIMAGE save data?)
+stimDur = 2;
+datatype = 'BRUKER';            %BRUKER or SCANIMAGE 
 saveLocation = 'D:\processed\'; %might change depending on machine
 doNeuropil = 0;                 %extract neuropil signal for subtraction?
+doResample = 1;
 tic;
 
 %%%%%%%%%%%%%%%%%%%%%%
@@ -144,28 +146,38 @@ for k = 1:length(folderList)
 
         %%%%%%%%%%%
         disp 'calculate df/f for all ROIs'
+        downsampvalue = 4;
         for cc = 1:length(ce)
             ce(cc).raw(1:30) = nan; %Bruker scope initial images are messed up
-%             dff = filterBaseline_dFcomp2(resample(ce(cc).raw,1,4));
-            dff = filterBaseline_dFcomp2(ce(cc).raw,99*4);
+            if doResample
+                dff = filterBaseline_dFcomp2(resample(ce(cc).raw,1,downsampvalue));
+                ce(cc).framePeriod =  ce(cc).framePeriod * downsampvalue;
+            else
+                dff = filterBaseline_dFcomp2(ce(cc).raw,99*4);
+            end
             ce(cc).dff = dff;
         end
 
         if doNeuropil
             %calculate df/f for neuropil trace
-%             dff = filterBaseline_dFcomp2(resample( ce(cc).raw_neuropil , 1 , 4));
-            dff = filterBaseline_dFcomp2(ce(cc).raw_neuropil);
+            if doResample
+                dff = filterBaseline_dFcomp2(resample( ce(cc).raw_neuropil , 1 , downsampvalue));
+            else
+                dff = filterBaseline_dFcomp2(ce(cc).raw_neuropil);
+            end
             ce(cc).dff_neuropil = dff;
         end
         toc
 
-        %%%%%%%%%%%
+        %%%%%%%
         
         disp 'grabbing two-photon frame times'
+        
+        cd(['D:\',datatype,'\',folderList(k).name,'\'])
+
         if strcmp(datatype,'BRUKER')
 
             %get voltage recording (10kHz sampling)
-            cd(['D:\',datatype,'\',folderList(k).name,'\'])
             voltageFiles = dir('*.csv');
             if length(voltageFiles)>1
                 disp 'why is there multiple voltage files??'
@@ -174,24 +186,41 @@ for k = 1:length(folderList)
             end
             Vrec = csvread(VoltageRecording_filename,2,1); %first row frame times, second row stimulus triggers
 
-            frameTriggers = find(diff(Vrec(:,1)) < -4); %first frame starts at 0?
+            frameTriggers = find( diff( Vrec(:,1) ) < -4); %first frame starts at 0?
+
             if frameTriggers(1) > 340 %(in 0.1 ms)
                 disp 'first 2p frame was dropped!'
             end
             [frameTriggers] = replaceMissingFrameTriggers(frameTriggers);
 
-            ce(1).frameTriggers = frameTriggers;
+        elseif strcmp(datatype,'SCANIMAGE') %.h5 files from wavesurfer
 
-        elseif strcmp(datatype,'SCANIMAGE')
-            %.h5 files from wavesurfer
+            voltageFiles = dir('*.h5');
+            if length(voltageFiles)>1
+                disp 'why is there multiple voltage files??'
+            else
+                VoltageRecording_filename = voltageFiles(1).name;
+            end
+            Vrec = h5read(VoltageRecording_filename,['/sweep_',VoltageRecording_filename(end-6:end-3),'/analogScans']);
+            Vrec = double(Vrec);
+
+            temp = double( diff( Vrec(:,1)./abs(max(Vrec(:,1) ) ) ) );
+            temp(temp>0) = 0;
+            temp = abs(temp);
+            [~,frameTriggers] = findpeaks(temp,'MinPeakDistance',200,'MinPeakHeight',0.1); 
+            temp = [];
 
         end
-        
+         
+        disp(['number of frametriggers detected: ',num2str(length(frameTriggers))])
+        ce(1).frameTriggers = frameTriggers;
+                    
+
+
         disp 'stimulus times and sync with two-photon'
         if size(Vrec,2)>1 && stimulusfile>-1
 
-%             stimulusTriggers = resamplevec(Vrec(:,2),.1); %downsample to 1kHz
-            stimulusTriggers = Vrec(:,2);
+            stimulusTriggers = medfilt1(Vrec(:,2),101);
             stimulusTriggers(stimulusTriggers<0) = 0;
             stimulusTriggers = diff(stimulusTriggers);
             [~,stimOn]=findpeaks(stimulusTriggers,'MinPeakDistance',500);
@@ -222,6 +251,7 @@ for k = 1:length(folderList)
             ce(1).stimOn2pFrame = stimOn2pFrame;
 
             %%%%%%%%%%%%%%%%%
+            genstimcyc([stimDur 1 1]);
 
         else
             disp 'no stimulus triggers recorded'
@@ -235,7 +265,7 @@ for k = 1:length(folderList)
         DendriteSubtraction(1)
 
         %neuropil subtraction - TO ADD
-        
+      
         %save
         disp saving
         save([saveLocation,folderList(k).name,'.mat'],'ce','-mat','-v7.3')

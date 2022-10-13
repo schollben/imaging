@@ -19,7 +19,7 @@ datatype = 'SCANIMAGE'; %BRUKER or SCANIMAGE
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 %data location and folder(s)
 %BRUKER files are MarkPoints or SingleImage or TSeries
-%SI files are user-defined names
+%SCANIMAGE files are user-defined names - but aiming to label as 'TSeries-date-xxx'
 date = '06062022'; 
 fnames = [3]; 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -28,7 +28,7 @@ organizeFiles(fnames,datatype,date)
 folderList = gettargetFolders2(['D:\',datatype],date,fnames);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 for k = 1:length(folderList)
-
+    tic;
     cd(['D:\',datatype,'\',folderList(k).name]);
     fileList = dir('*.tif');
     mkdir('Registered\Channel1');
@@ -49,6 +49,7 @@ for k = 1:length(folderList)
     imgInfo.sizeX = sizeX;
     imgInfo.sizeY = sizeY;
 
+    singleimages = 0;
     if depth==1
         
         singleimages = 1; %flag used later
@@ -106,7 +107,6 @@ for k = 1:length(folderList)
     %%%%%%%%%%%%%%%%%%%%%%%%%%%
     %begin working files
     for j = 1:length(batches)
-        tic;
         %build stack
         imgStack = [];
         for frmn = batches{j}
@@ -176,6 +176,7 @@ for k = 1:length(folderList)
         toc;
     end
     save([outputDir,'\imgInfo'],'imgInfo')
+    toc
 end
 clear 
 delete(gcp)

@@ -3,7 +3,7 @@
 % usually used for large datasets
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% initialize parallel
+%% initialize parpool
 clear 
 parpool
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -14,20 +14,17 @@ ChunkProcess = 0; %flag to apply shifts across batches of images
 doimagSpatSamp = 0; %flag to use 0.5x downsampling
 useCh2template = 0; %use Ch2 for registering (red/structural)
 datatype = 'BRUKER'; %BRUKER or SCANIMAGE - (SCANIMAGE uses bigtiffreader and file names are different)
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 %data location and folder(s)
 %BRUKER files are MarkPoints or SingleImage or TSeries
-%SCANIMAGE files are user-defined names - currently set as 'TSeries'
+%SCANIMAGE files are user-defined names - but aiming to label as 'TSeries-date-xxx'
 date = '08282022';
-fnames = [2];
-
+fnames = [2 1 3];
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%find image location
 organizeFiles(fnames,datatype,date) 
 folderList = gettargetFolders2(['D:\',datatype],date,fnames);
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 for k = 1:length(folderList)
     tic;
     cd(['D:\',datatype,'\',folderList(k).name]);
@@ -50,6 +47,7 @@ for k = 1:length(folderList)
     imgInfo.sizeX = sizeX;
     imgInfo.sizeY = sizeY;
 
+    singleimages = 0;
     if depth==1
         
         singleimages = 1; %flag used later
@@ -170,7 +168,7 @@ for k = 1:length(folderList)
         end
     end
     save([outputDir,'\imgInfo'],'imgInfo')
-    toc;
+    toc
 end
 delete(gcp)
 

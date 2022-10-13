@@ -4,11 +4,12 @@
 % 
 %   - subcellularRegisttration_normcorre: typically for spines and complex motion artifact
 %
-%   - Registration_Rigid_ParPool: for simple registration of movement
+%   - Registration_Rigid_ParPool: for simple registration of movement 
+% (best to use with population data without too much motion problems)
 %
 %   - Registration_Rigid: Same as above without parallel processing
 %
-%   - Images are saved as 1000-frame stacks
+%   - Images are saved as 500 or 1000 stacks
 %
 % Draw ROIs
 %   - Open Fiji (ImageJ)
@@ -24,7 +25,7 @@
 %       imaging (i.e. cells, as compared to dendritic spines). This can
 %       generate processed data for subsqeuent analysis.
 %
-% Extract Signals for Analysis: 'getTracesDFF' 
-%
+% Extract Signals for Analysis 
+%   - use 'getTracesDFF' script
 %
 %

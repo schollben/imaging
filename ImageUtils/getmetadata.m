@@ -26,8 +26,6 @@ if strcmp(datatype,'BRUKER')
 
 elseif strcmp(datatype,'SCANIMAGE')
 
-    % NOTE- HAVE NOT EDITED THIS CODE YET
-
     metadata=ScanImageTiffReader(fileList(1).name).metadata;
     meta = regexp(metadata,'[\w\.]+','match');
     %check if there 2 channels saved
@@ -49,6 +47,7 @@ elseif strcmp(datatype,'SCANIMAGE')
     %framerate
     loc = find(ismember(meta, 'SI.hRoiManager.scanFrameRate'));
     imgInfo.framerate = str2double(meta(loc+1));
+    imgInfo.framePeriod = 1 / imgInfo.framerate;
     %Zoom angle
     loc = find(ismember(meta, 'SI.hRoiManager.scanZoomFactor'));
     imgInfo.opticalZoom = str2double(meta(loc+1));
