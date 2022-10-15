@@ -24,7 +24,7 @@ date = '06062022';
 fnames = [3]; 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 %find image location
-organizeFiles(fnames,datatype,date) 
+organizeSCANIMAGEFiles();
 folderList = gettargetFolders2(['D:\',datatype],date,fnames);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 for k = 1:length(folderList)

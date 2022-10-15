@@ -18,11 +18,11 @@ datatype = 'BRUKER'; %BRUKER or SCANIMAGE - (SCANIMAGE uses bigtiffreader and fi
 %data location and folder(s)
 %BRUKER files are MarkPoints or SingleImage or TSeries
 %SCANIMAGE files are user-defined names - but aiming to label as 'TSeries-date-xxx'
-date = '08282022';
-fnames = [2 1 3];
+date = '10082022';
+fnames = [1:11];
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%find image location
-organizeFiles(fnames,datatype,date) 
+organizeSCANIMAGEFiles();
 folderList = gettargetFolders2(['D:\',datatype],date,fnames);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 for k = 1:length(folderList)

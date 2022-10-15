@@ -12,12 +12,12 @@
 %%initialize params
 date = '08282022';
 filenum = 2;
-stimulusfile = 6;            %set to -1 if there is no stimulus presented (not needed for SCANIMAGE save data?)
-stimDur = 2;
-datatype = 'BRUKER';            %BRUKER or SCANIMAGE 
-saveLocation = 'D:\processed\'; %might change depending on machine
-doNeuropil = 0;                 %extract neuropil signal for subtraction?
-doResample = 1;
+stimulusfile = 6;                   %set to -1 if there is no stimulus presented (not needed for SCANIMAGE save data?)
+stimInfo = [2 0 0];               %duration prestim *slag*
+datatype = 'BRUKER';             %BRUKER or SCANIMAGE 
+saveLocation = 'D:\processed\';     %might change depending on machine
+doNeuropil = 0;                     %extract neuropil signal for subtraction?
+doResample = 0;
 tic;
 
 %%%%%%%%%%%%%%%%%%%%%%
@@ -83,7 +83,11 @@ for k = 1:length(folderList)
             ce(cc).mask2d = sparse(mask2d);
             ce(cc).date = date;
             ce(cc).file = filenum;
-            ce(cc).framePeriod = str2double(imgInfo.framePeriod);
+            if ischar(imgInfo.framePeriod)
+                ce(cc).framePeriod = str2double(imgInfo.framePeriod);
+            else
+                ce(cc).framePeriod = (imgInfo.framePeriod);
+            end
             ce(cc).opticalZoom = imgInfo.opticalZoom;
 
             ce(cc).soma = (strcmp(sROI{cc}.strType,'Freehand') | strcmp(sROI{cc}.strType,'Oval')) ...
@@ -99,7 +103,7 @@ for k = 1:length(folderList)
             ce(cc).depth = [];                                  %imgInfo.Zdepth; %distance from surface
             ce(cc).img = [];
 
-            ce(cc).scale = 1 / imgInfo.micronsPerPixel(1);      % pixels per micron -> NEED TO ADD FOR SCANIMAGE DATA
+            ce(cc).scale = 1 / 1;% imgInfo.micronsPerPixel(1);      % pixels per micron -> NEED TO ADD FOR SCANIMAGE DATA
             ce(cc).raw = [];
             ce(cc).raw_neuropil = [];
             
@@ -151,7 +155,6 @@ for k = 1:length(folderList)
             ce(cc).raw(1:30) = nan; %Bruker scope initial images are messed up
             if doResample
                 dff = filterBaseline_dFcomp2(resample(ce(cc).raw,1,downsampvalue));
-                ce(cc).framePeriod =  ce(cc).framePeriod * downsampvalue;
             else
                 dff = filterBaseline_dFcomp2(ce(cc).raw,99*4);
             end
@@ -223,9 +226,9 @@ for k = 1:length(folderList)
             stimulusTriggers = medfilt1(Vrec(:,2),101);
             stimulusTriggers(stimulusTriggers<0) = 0;
             stimulusTriggers = diff(stimulusTriggers);
-            [~,stimOn]=findpeaks(stimulusTriggers,'MinPeakDistance',500);
+            [~,stimOn]=findpeaks(stimulusTriggers,'MinPeakDistance',1e3,'MinPeakHeight',max(stimulusTriggers) - max(stimulusTriggers)*.9);
             ce(1).stimOn = stimOn;
-            [~,stimOff]=findpeaks(-stimulusTriggers,'MinPeakDistance',500);
+            [~,stimOff]=findpeaks(stimulusTriggers,'MinPeakDistance',1e3,'MinPeakHeight',max(stimulusTriggers) - max(stimulusTriggers)*.9);
             ce(1).stimOff = stimOff;
             
             cd(['D:\Pyschopy\',date(5:end),'-',date(1:2),'-',date(3:4)])
@@ -251,7 +254,13 @@ for k = 1:length(folderList)
             ce(1).stimOn2pFrame = stimOn2pFrame;
 
             %%%%%%%%%%%%%%%%%
-            genstimcyc([stimDur 1 1]);
+            if doResample
+                %need to modify effective framerate and stimOn2pFrame
+                ce(1).framePeriod =  ce(1).framePeriod * downsampvalue;
+                ce(1).stimOn2pFrame = floor( ce(1).stimOn2pFrame / downsampvalue);
+            end
+
+            genstimcyc(stimInfo); %SCANIMAGE rig slagged by 0.5 sec?
 
         else
             disp 'no stimulus triggers recorded'
@@ -265,7 +274,8 @@ for k = 1:length(folderList)
         DendriteSubtraction(1)
 
         %neuropil subtraction - TO ADD
-      
+
+
         %save
         disp saving
         save([saveLocation,folderList(k).name,'.mat'],'ce','-mat','-v7.3')

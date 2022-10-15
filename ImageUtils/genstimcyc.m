@@ -9,11 +9,11 @@ global ce
 if nargin==0
    stimDur = 2;
    pre = 0;
-   post = 0;
+   slag = 0;
 else
    stimDur = stimInfo(1);
    pre = stimInfo(2);
-   post = stimInfo(3);
+   slag = stimInfo(3);
 end
 
 stimID = ce(1).stimID;
@@ -24,12 +24,13 @@ ntrials = floor(length(stimID) / length(uniqStims));
 %convert time in sec to frames ( which might be downsampled)
 stimDur = round(stimDur / ce(1).framePeriod);
 pre = round(pre / ce(1).framePeriod);
-post = round(post / ce(1).framePeriod);
+slag = round(slag / ce(1).framePeriod);
 
 
     for cc = 1:length(ce)
     
-    ce(cc).cyc = zeros( length(uniqStims), ntrials, stimDur + pre + post);
+    ce(cc).cyc = [];
+    ce(cc).cyc = zeros( length(uniqStims), ntrials, stimDur + pre);
     
     if ~ce(cc).spine
         dff = ce(cc).dff;
@@ -43,7 +44,7 @@ post = round(post / ce(1).framePeriod);
     
         if sum(trialList==ntrials)~=uniqStims
 
-            tt = stimOn2pFrame(ii) - pre + 1 : stimOn2pFrame(ii) + stimDur + post;
+            tt = stimOn2pFrame(ii) - pre + 1 + slag : stimOn2pFrame(ii) + stimDur + slag;
             
             ind = find(uniqStims==stimID(ii));
             
