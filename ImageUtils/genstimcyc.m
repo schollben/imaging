@@ -32,12 +32,8 @@ slag = round(slag / ce(1).framePeriod);
     ce(cc).cyc = [];
     ce(cc).cyc = zeros( length(uniqStims), ntrials, stimDur + pre);
     
-    if ~ce(cc).spine
-        dff = ce(cc).dff;
-    else
-        dff = ce(cc).dffRes;
-    end
-
+    dff = ce(cc).dff;
+    
     trialList = zeros(1,length(uniqStims));
 
     for ii = 1:length(stimOn2pFrame)
@@ -45,6 +41,7 @@ slag = round(slag / ce(1).framePeriod);
         if sum(trialList==ntrials)~=uniqStims
 
             tt = stimOn2pFrame(ii) - pre + 1 + slag : stimOn2pFrame(ii) + stimDur + slag;
+            length(tt)
             
             ind = find(uniqStims==stimID(ii));
             
