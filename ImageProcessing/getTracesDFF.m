@@ -18,11 +18,10 @@ datatype = 'BRUKER';             %BRUKER or SCANIMAGE
 saveLocation = 'D:\processed\';     %might change depending on machine
 doNeuropil = 0;                     %extract neuropil signal for subtraction?
 doResample = 1;
-tic;
 
 %%%%%%%%%%%%%%%%%%%%%%
 %%get data locations
-folderList = gettargetFolders2(['D:\',datatype,'\'],date,filenum);
+tic; folderList = gettargetFolders2(['D:\',datatype,'\'],date,filenum);
 
 for k = 1:length(folderList)
 
@@ -220,7 +219,7 @@ for k = 1:length(folderList)
         ce(1).frameTriggers = frameTriggers;
                     
 
-
+%%
         disp 'stimulus times and sync with two-photon'
         if size(Vrec,2)>1 && stimulusfile>-1
 

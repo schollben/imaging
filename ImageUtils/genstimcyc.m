@@ -41,7 +41,6 @@ slag = round(slag / ce(1).framePeriod);
         if sum(trialList==ntrials)~=uniqStims
 
             tt = stimOn2pFrame(ii) - pre + 1 + slag : stimOn2pFrame(ii) + stimDur + slag;
-            length(tt)
             
             ind = find(uniqStims==stimID(ii));
             

@@ -11,9 +11,9 @@
 
 %%initialize params
 date = '08252022';
-filenum = 1;
-stimulusfile = 6;                   %set to -1 if there is no stimulus presented (not needed for SCANIMAGE save data?)
-stimInfo = [1 0 0];               %duration prestim *slag*
+filenum = 2;
+stimulusfile = 9;                   %set to -1 if there is no stimulus presented (not needed for SCANIMAGE save data?)
+stimInfo = [2 0 0];               %duration prestim *slag*
 datatype = 'BRUKER';             %BRUKER or SCANIMAGE 
 saveLocation = 'D:\processed\';     %might change depending on machine
 doNeuropil = 0;                     %extract neuropil signal for subtraction?
@@ -109,6 +109,7 @@ for k = 1:length(folderList)
             
             fprintf('.')
         end
+        ce(1).framePeriod = mean([ce.framePeriod]);
         toc
 
         if doNeuropil
@@ -219,7 +220,7 @@ for k = 1:length(folderList)
         ce(1).frameTriggers = frameTriggers;
                     
 
-
+%%
         disp 'stimulus times and sync with two-photon'
         if size(Vrec,2)>1 && stimulusfile>-1
 
@@ -236,9 +237,11 @@ for k = 1:length(folderList)
 
             fidi = fopen(['T',sprintf('%03d',stimulusfile),'.txt'], 'rt');
             stimstr = textscan(fidi, '%s%s', 'CollectOutput',1);
-fclose(fidi)
+            fclose(fidi)
+
             stimID = pyschopyFile(:,1);
             ce(1).stimID = stimID;
+            ce(1).stimstr = stimstr{1};
             uniqStims = unique(stimID);
             ce(1).uniqStims = uniqStims;
             ce(1).stimProperties = pyschopyFile(:,2:end);
@@ -268,9 +271,6 @@ fclose(fidi)
 
         
         %%%%%%%%%%%
-        %dendritic substraction
-        DendriteSubtraction(1)        %argin = 1 - use full trace for subtraction, argin = 2 - use stimuli ('stimulus duration' periods)
-
         %neuropil subtraction
         if doNeuropil
             NeuropilSubtraction();
@@ -279,7 +279,8 @@ fclose(fidi)
         %stimulus cyc generation - add peak response?
         genstimcyc(stimInfo); %SCANIMAGE rig slagged by 0.5 sec?
 
-
+        %dendritic substraction
+        DendriteSubtraction(1)        %argin = 1 - use full trace for subtraction, argin = 2 - use stimuli ('stimulus duration' periods)
 
         %%%%%%%%%%%
         disp saving

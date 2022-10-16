@@ -106,77 +106,79 @@ for k = 1:length(folderList)
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%
     %begin working files
-    for j = 1:length(batches)
-        %build stack
-        imgStack = [];
-        for frmn = batches{j}
-            imgStack = cat(3,imgStack,ScanImageTiffReader(fileList(frmn).name).data);
-        end
-        imgStack = squeeze(imgStack);
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %2x spatial downsampling
-        if doimagSpatSamp>0
-            for frnum = 1:size(imgStack,3)
-                im = squeeze(imgStack(:,:,frnum));
-                if doimagSpatSamp==1
-                    im = imresize(im,0.5);
-                elseif doimagSpatSamp==0.5
-                    im = imresize(im,[512 250]);
-                end
-                im(im<0) = 0;
-                imgStack(1:size(imgStack,1)/2,1:size(imgStack,2)/2,frnum) = im;
+    if depth>=500 && length(fileList)>1
+        for j = 1:length(batches)
+            %build stack
+            imgStack = [];
+            for frmn = batches{j}
+                imgStack = cat(3,imgStack,ScanImageTiffReader(fileList(frmn).name).data);
             end
-            imgStack = imgStack(1:size(imgStack,1)/2,1:size(imgStack,2)/2,:);
-            disp(['spat resamp and thresh done'])
-        end
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %if using Ch2 for template
-        if useCh2template
-            ch1Stack = imgStack(:,:,1:2:end);
-            imgStack = imgStack(:,:,2:2:end);
-        end
-        [height,width,depth] = size(imgStack);
-
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %NoRMCorreSetParms
-        options_rigid = NoRMCorreSetParms('d1',size(imgStack,1),'d2',size(imgStack,2),'grid_size',[gridWidth,gridHeight],'overlap_pre',op,'bin_width',50,'max_shift',100,'us_fac',50,'iter',niter);
-        options_rigid.use_parallel = 1;
-        %Run
-        disp('running NoRMCorre')
-        [imgStack,shifts,~] = normcorre(imgStack,options_rigid,template);
-        %apply Ch2 shifts to Ch1
-        if useCh2template
-            ch1Stack = apply_shifts(ch1Stack,shifts,options_rigid);
-        end
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %save images outputDir
-        for frmn = 1:size(imgStack,3)
-
-            filenameCh1 = [outputDirCh1 '\' sprintf('%06i',j) '.tif'];
-            filenameCh2 = [outputDirCh2 '\' sprintf('%06i',j) '.tif'];
-
-            if frmn == 1
-                if useCh2template
-                    imwrite(uint16(ch1Stack(:,:,frmn))',filenameCh1,'tif','write','overwrite','compression','none')
-                    imwrite(uint16(imgStack(:,:,frmn))',filenameCh2,'tif','write','overwrite','compression','none')
-                else
-                    imwrite(uint16(imgStack(:,:,frmn))',filenameCh1,'tif','write','overwrite','compression','none')
+            imgStack = squeeze(imgStack);
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %2x spatial downsampling
+            if doimagSpatSamp>0
+                for frnum = 1:size(imgStack,3)
+                    im = squeeze(imgStack(:,:,frnum));
+                    if doimagSpatSamp==1
+                        im = imresize(im,0.5);
+                    elseif doimagSpatSamp==0.5
+                        im = imresize(im,[512 250]);
+                    end
+                    im(im<0) = 0;
+                    imgStack(1:size(imgStack,1)/2,1:size(imgStack,2)/2,frnum) = im;
                 end
-            else
-                if useCh2template
-                    imwrite(uint16(ch1Stack(:,:,frmn))',filenameCh1,'tif','write','append','compression','none')
-                    imwrite(uint16(imgStack(:,:,frmn))',filenameCh2,'tif','write','append','compression','none')
+                imgStack = imgStack(1:size(imgStack,1)/2,1:size(imgStack,2)/2,:);
+                disp(['spat resamp and thresh done'])
+            end
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %if using Ch2 for template
+            if useCh2template
+                ch1Stack = imgStack(:,:,1:2:end);
+                imgStack = imgStack(:,:,2:2:end);
+            end
+            [height,width,depth] = size(imgStack);
+
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %NoRMCorreSetParms
+            options_rigid = NoRMCorreSetParms('d1',size(imgStack,1),'d2',size(imgStack,2),'grid_size',[gridWidth,gridHeight],'overlap_pre',op,'bin_width',50,'max_shift',100,'us_fac',50,'iter',niter);
+            options_rigid.use_parallel = 1;
+            %Run
+            disp('running NoRMCorre')
+            [imgStack,shifts,~] = normcorre(imgStack,options_rigid,template);
+            %apply Ch2 shifts to Ch1
+            if useCh2template
+                ch1Stack = apply_shifts(ch1Stack,shifts,options_rigid);
+            end
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %save images outputDir
+            for frmn = 1:size(imgStack,3)
+
+                filenameCh1 = [outputDirCh1 '\' sprintf('%06i',j) '.tif'];
+                filenameCh2 = [outputDirCh2 '\' sprintf('%06i',j) '.tif'];
+
+                if frmn == 1
+                    if useCh2template
+                        imwrite(uint16(ch1Stack(:,:,frmn))',filenameCh1,'tif','write','overwrite','compression','none')
+                        imwrite(uint16(imgStack(:,:,frmn))',filenameCh2,'tif','write','overwrite','compression','none')
+                    else
+                        imwrite(uint16(imgStack(:,:,frmn))',filenameCh1,'tif','write','overwrite','compression','none')
+                    end
                 else
-                    imwrite(uint16(imgStack(:,:,frmn))',filenameCh1,'tif','write','append','compression','none')
+                    if useCh2template
+                        imwrite(uint16(ch1Stack(:,:,frmn))',filenameCh1,'tif','write','append','compression','none')
+                        imwrite(uint16(imgStack(:,:,frmn))',filenameCh2,'tif','write','append','compression','none')
+                    else
+                        imwrite(uint16(imgStack(:,:,frmn))',filenameCh1,'tif','write','append','compression','none')
+                    end
                 end
             end
-        end
 
-        disp(['Saved Images: ',outputDirCh1]);
-        toc;
+            disp(['Saved Images: ',outputDirCh1]);
+            toc;
+        end
+        save([outputDir,'\imgInfo'],'imgInfo')
+        toc
     end
-    save([outputDir,'\imgInfo'],'imgInfo')
-    toc
 end
 clear 
 delete(gcp)
