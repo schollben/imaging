@@ -106,7 +106,7 @@ for k = 1:length(folderList)
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%
     %begin working files
-    if depth>=500 && length(fileList)>1
+    if (strcmp(datatype,'SCANIMAGE') && (depth>=500)) || (strcmp(datatype,'BRUKER'))
         for j = 1:length(batches)
             %build stack
             imgStack = [];

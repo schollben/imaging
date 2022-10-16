@@ -10,7 +10,7 @@
 %%%%%%%%%%%%%%%%%%%%%%
 
 %%initialize params
-date = '08212022';
+date = '10082022';
 filenum = 1;
 stimulusfile = 2;                   %set to -1 if there is no stimulus presented (not needed for SCANIMAGE save data?)
 stimInfo = [2 0 0];               %duration prestim *slag*
@@ -219,7 +219,7 @@ for k = 1:length(folderList)
         ce(1).frameTriggers = frameTriggers;
                     
 
-%%
+
         disp 'stimulus times and sync with two-photon'
         if size(Vrec,2)>1 && stimulusfile>-1
 

@@ -7,19 +7,19 @@
 clear 
 parpool
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%initialize params
+%% initialize params
 downsampleRates = [1/16 1/8 1/4 1/2 1];
 maxMovement = 1/8;
-ChunkProcess = 0; %flag to apply shifts across batches of images
+ChunkProcess =   100; %flag to apply shifts across batches of images
 doimagSpatSamp = 0; %flag to use 0.5x downsampling
 useCh2template = 0; %use Ch2 for registering (red/structural)
-datatype = 'SCANIMAGE'; %BRUKER or SCANIMAGE - (SCANIMAGE uses bigtiffreader and file names are different)
+datatype = 'BRUKER'; %BRUKER or SCANIMAGE - (SCANIMAGE uses bigtiffreader and file names are different)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 %data location and folder(s)
 %BRUKER files are MarkPoints or SingleImage or TSeries
 %SCANIMAGE files are user-defined names - but aiming to label as 'TSeries-date-xxx'
-date = '10082022';
-fnames = [9];
+date = '10042022';
+fnames = [1:10];
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%find image location
 organizeSCANIMAGEFiles();
@@ -104,8 +104,8 @@ for k = 1:length(folderList)
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%
     %begin working files
-    if depth>=500 && length(fileList)>1
-        for j = 1:length(batches)
+    if (strcmp(datatype,'SCANIMAGE') && (depth>=500)) || (strcmp(datatype,'BRUKER'))
+        parfor j = 1:length(batches)
 
             %build stack
             imgStack = [];
