@@ -18,8 +18,13 @@ datatype = 'BRUKER'; %BRUKER or SCANIMAGE - (SCANIMAGE uses bigtiffreader and fi
 %data location and folder(s)
 %BRUKER files are MarkPoints or SingleImage or TSeries
 %SCANIMAGE files are user-defined names - but aiming to label as 'TSeries-date-xxx'
-date = '10042022';
-fnames = [1:10];
+DATES{1} = '09272022'; FNAMES{1} = [1:8];
+DATES{2} = '10082022'; FNAMES{2} = [1:11];
+DATES{3} = '10042022'; FNAMES{3} = [1:10];
+DATES{4} = '09222022'; FNAMES{4} = [1:9];
+for sesh = 1:length(DATES)
+date = DATES{sesh};
+fnames = FNAMES{sesh};
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%find image location
 organizeSCANIMAGEFiles();
@@ -171,6 +176,7 @@ for k = 1:length(folderList)
         save([outputDir,'\imgInfo'],'imgInfo')
         toc
     end
+end
 end
 delete(gcp)
 
