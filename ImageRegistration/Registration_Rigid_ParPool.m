@@ -3,10 +3,6 @@
 % usually used for large datasets
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% initialize parpool
-clear 
-parpool
-%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% initialize params
 downsampleRates = [1/16 1/8 1/4 1/2 1];
 maxMovement = 1/8;
@@ -18,17 +14,15 @@ datatype = 'BRUKER'; %BRUKER or SCANIMAGE - (SCANIMAGE uses bigtiffreader and fi
 %data location and folder(s)
 %BRUKER files are MarkPoints or SingleImage or TSeries
 %SCANIMAGE files are user-defined names - but aiming to label as 'TSeries-date-xxx'
-DATES{1} = '09272022'; FNAMES{1} = [1:8];
-DATES{2} = '10082022'; FNAMES{2} = [1:11];
-DATES{3} = '10042022'; FNAMES{3} = [1:10];
-DATES{4} = '09222022'; FNAMES{4} = [1:9];
+DATES{1} = '10212022'; FNAMES{1} = [1];
 for sesh = 1:length(DATES)
 date = DATES{sesh};
 fnames = FNAMES{sesh};
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%find image location
 organizeSCANIMAGEFiles();
-folderList = gettargetFolders2(['D:\',datatype],date,fnames);
+folderList = gettargetFolders2(['D:\',datatype],date,fnames,'ZSeries');
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 for k = 1:length(folderList)
     tic;
@@ -110,7 +104,7 @@ for k = 1:length(folderList)
     %%%%%%%%%%%%%%%%%%%%%%%%%%%
     %begin working files
     if (strcmp(datatype,'SCANIMAGE') && (depth>=500)) || (strcmp(datatype,'BRUKER'))
-        parfor j = 1:length(batches)
+        for j = 1:length(batches)
 
             %build stack
             imgStack = [];

@@ -10,14 +10,15 @@
 %%%%%%%%%%%%%%%%%%%%%%
 
 %%initialize params
-date = '10082022';
-filenum = 1;
+date = '09222022';
+filenum = 3;
 stimulusfile = 2;                   %set to -1 if there is no stimulus presented (not needed for SCANIMAGE save data?)
-stimInfo = [2 0 0];               %duration prestim *slag*
+stimInfo = [1.5 0 0];               %[duration prestim *slag*]
 datatype = 'BRUKER';             %BRUKER or SCANIMAGE 
 saveLocation = 'D:\processed\';     %might change depending on machine
 doNeuropil = 0;                     %extract neuropil signal for subtraction?
 doResample = 1;
+photostimTrigs = 1;
 
 %%%%%%%%%%%%%%%%%%%%%%
 %%get data locations
@@ -173,56 +174,54 @@ for k = 1:length(folderList)
         toc
 
         %%%%%%%
-        
-        disp 'grabbing two-photon frame times'
-        
-        cd(['D:\',datatype,'\',folderList(k).name,'\'])
+        if stimulusfile>-1
 
-        if strcmp(datatype,'BRUKER')
+            disp 'grabbing two-photon frametimes'
 
-            %get voltage recording (10kHz sampling)
-            voltageFiles = dir('*.csv');
-            if length(voltageFiles)>1
-                disp 'why is there multiple voltage files??'
-            else
-                VoltageRecording_filename = voltageFiles(1).name;
+            cd(['D:\',datatype,'\',folderList(k).name,'\'])
+
+            if strcmp(datatype,'BRUKER')
+
+                %get voltage recording (10kHz sampling)
+                voltageFiles = dir('*.csv');
+                if length(voltageFiles)>1
+                    disp 'why is there multiple voltage files??'
+                else
+                    VoltageRecording_filename = voltageFiles(1).name;
+                end
+                Vrec = csvread(VoltageRecording_filename,2,1); %first row frame times, second row stimulus triggers
+
+                frameTriggers = find( diff( Vrec(:,1) ) < -4); %first frame starts at 0?
+
+                if frameTriggers(1) > 340 %(in 0.1 ms)
+                    disp 'first 2p frame was dropped!'
+                end
+                [frameTriggers] = replaceMissingFrameTriggers(frameTriggers);
+
+            elseif strcmp(datatype,'SCANIMAGE') %.h5 files from wavesurfer
+
+                voltageFiles = dir('*.h5');
+                if length(voltageFiles)>1
+                    disp 'why is there multiple voltage files??'
+                else
+                    VoltageRecording_filename = voltageFiles(1).name;
+                end
+                Vrec = h5read(VoltageRecording_filename,['/sweep_',VoltageRecording_filename(end-6:end-3),'/analogScans']);
+                Vrec = double(Vrec);
+
+                temp = double( diff( Vrec(:,1)./abs(max(Vrec(:,1) ) ) ) );
+                temp(temp>0) = 0;
+                temp = abs(temp);
+                [~,frameTriggers] = findpeaks(temp,'MinPeakDistance',200,'MinPeakHeight',0.1);
+                temp = [];
+
             end
-            Vrec = csvread(VoltageRecording_filename,2,1); %first row frame times, second row stimulus triggers
 
-            frameTriggers = find( diff( Vrec(:,1) ) < -4); %first frame starts at 0?
-
-            if frameTriggers(1) > 340 %(in 0.1 ms)
-                disp 'first 2p frame was dropped!'
-            end
-            [frameTriggers] = replaceMissingFrameTriggers(frameTriggers);
-
-        elseif strcmp(datatype,'SCANIMAGE') %.h5 files from wavesurfer
-
-            voltageFiles = dir('*.h5');
-            if length(voltageFiles)>1
-                disp 'why is there multiple voltage files??'
-            else
-                VoltageRecording_filename = voltageFiles(1).name;
-            end
-            Vrec = h5read(VoltageRecording_filename,['/sweep_',VoltageRecording_filename(end-6:end-3),'/analogScans']);
-            Vrec = double(Vrec);
-
-            temp = double( diff( Vrec(:,1)./abs(max(Vrec(:,1) ) ) ) );
-            temp(temp>0) = 0;
-            temp = abs(temp);
-            [~,frameTriggers] = findpeaks(temp,'MinPeakDistance',200,'MinPeakHeight',0.1); 
-            temp = [];
-
-        end
-         
-        disp(['number of frametriggers detected: ',num2str(length(frameTriggers))])
-        ce(1).frameTriggers = frameTriggers;
-                    
+            disp(['number of frametriggers detected: ',num2str(length(frameTriggers))])
+            ce(1).frameTriggers = frameTriggers;
 
 
-        disp 'stimulus times and sync with two-photon'
-        if size(Vrec,2)>1 && stimulusfile>-1
-
+            disp 'stimulus times and photoStim times and sync with two-photon'
             stimulusTriggers = medfilt1(Vrec(:,2),101);
             stimulusTriggers(stimulusTriggers<0) = 0;
             stimulusTriggers = diff(stimulusTriggers);
@@ -230,7 +229,15 @@ for k = 1:length(folderList)
             ce(1).stimOn = stimOn;
             [~,stimOff]=findpeaks(stimulusTriggers,'MinPeakDistance',1e3,'MinPeakHeight',max(stimulusTriggers) - max(stimulusTriggers)*.9);
             ce(1).stimOff = stimOff;
+            length(stimOn)
             
+            trigs = medfilt1(Vrec(:,3),101);
+            trigs(trigs<0) = 0;
+            [~,photoStimTrig]=findpeaks(trigs,'MinPeakDistance',1e4,'MinPeakHeight',max(stimulusTriggers) - max(stimulusTriggers)*.5);
+            ce(1).photoStimTrig = photoStimTrig;
+            length(photoStimTrig)
+            
+
             cd(['D:\Pyschopy\',date(5:end),'-',date(1:2),'-',date(3:4)])
             pyschopyFile = readmatrix(['T',sprintf('%03d',stimulusfile),'.txt']);
 
@@ -249,7 +256,9 @@ for k = 1:length(folderList)
                 disp 'mismatch between number of stimulus triggers and stimuli IDs'
             end
 
-            %get stimOn2pFrame (frame where stimulus occured)
+
+
+            %get stimOn2pFrame (frame where stimulus and photostim occured)
             stimOn2pFrame = [];
             for ss = 1:length(stimOn)
                 [~,frameloc] = min(abs(stimOn(ss)-frameTriggers));
@@ -268,7 +277,7 @@ for k = 1:length(folderList)
             disp 'no stimulus triggers recorded'
         end
 
-        
+
         %%%%%%%%%%%
         %neuropil subtraction
         if doNeuropil

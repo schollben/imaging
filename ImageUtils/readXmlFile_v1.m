@@ -1,6 +1,8 @@
 %%%function recInfo = readXmlFile_v2_20170730(filename)
 
-filename = 'TSeries-06172022-0138-002.xml';
+% filename = 'TSeries-06172022-0138-002.xml';
+filename = 'TSeries-09222022-1240-001.xml';%_Cycle00001_MarkPoints';
+
 
 % read xml file
 fclose('all');

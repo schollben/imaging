@@ -1,8 +1,10 @@
 % delete straightened arrays with only bar
 %identify all folder names
-cd M:\
+function [] = DeleteRawImageData(datatype)
+
+cd(['D:\',datatype])
 folders = dir('*'); 
-for ii = 1:100 % 1:length(folders)
+for ii = 1:length(folders)
     folderName = folders(ii).name;
     if strcmp(folderName,'2018-Feb-23')
         cd(['M:\',folderName])

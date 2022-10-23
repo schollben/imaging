@@ -1,8 +1,7 @@
 %
-function folderList = gettargetFolders2(loc,date,fnames,filetype)
+function folderList = gettargetFolders2(loc,date,fnames)
 if nargin<3
     fnames = [];
-    filetype = 'TSeries';
 end
 cd(loc)
 
@@ -12,7 +11,7 @@ cd(loc)
 % %     folderList = dir(['*','TSeries_',date(end-3:end),'-',date(1:2),'-',date(3:4),'*']);
 % % end
 
-folderList = dir(['*',filetype,'-',date,'*']);
+folderList = dir(['*','TSeries-',date,'*']);
 
 
 if isempty(folderList)

@@ -3,33 +3,28 @@
 %
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% initialize parallel
-clear 
-parpool
-%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% initialize params
 niter = 1; %number of iterations
-gridWidth = 256; %decrease for better registration (in px)
-gridHeight = 256; %decrease for better registration (in px)
+gridWidth = 64; %decrease for better registration (in px)
+gridHeight = 64; %decrease for better registration (in px)
 op = 32; %grid overlap 
 %see more NormCorre parameters below
 doimagSpatSamp = 0; %flag to use 0.5x downsampling
-useCh2template = 0; %use Ch2 for registering (red/structural)
-datatype = 'BRUKER'; %BRUKER or SCANIMAGE
+useCh2template = 1; %use Ch2 for registering (red/structural)
+datatype = 'SCANIMAGE'; %BRUKER or SCANIMAGE
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 %data location and folder(s)
-%BRUKER files are MarkPoints or SingleImage or TSeries
-%SCANIMAGE files are user-defined names - but aiming to label as 'TSeries-date-xxx'
-DATES{1} = '08302022'; FNAMES{1} = [1:7];
-DATES{2} = '08212022'; FNAMES{2} = [2:4];
-DATES{3} = '08252022'; FNAMES{3} = [2:10];
+DATES{1} = '10082022'; FNAMES{1} = [9];
+DATES{2} = '10202022'; FNAMES{2} = [2:28];
+% DATES{1} = '08302022'; FNAMES{1} = [2 3 5 6 7];
+
 for sesh = 1:length(DATES)
 date = DATES{sesh};
 fnames = FNAMES{sesh};
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 %find image location
 organizeSCANIMAGEFiles();
-folderList = gettargetFolders2(['D:\',datatype],date,fnames);
+folderList = gettargetFolders2(['D:\',datatype],date,fnames,'TSeries');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 for k = 1:length(folderList)
     tic;
