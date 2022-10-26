@@ -1,29 +1,34 @@
-% code to use NormCorre nonrigid registration
-% usually used to register dendrite/spine imaging data
-%
+% code to use rigid registration with parallel toolbox
+% usually used to register cellular imaging data
+% usually used for large datasets
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+parpool
 %% initialize params
-niter = 1; %number of iterations
-gridWidth = 64; %decrease for better registration (in px)
-gridHeight = 64; %decrease for better registration (in px)
-op = 32; %grid overlap 
-%see more NormCorre parameters below
-doimagSpatSamp = 1; %flag to use 0.5x downsampling
-useCh2template = 0; %use Ch2 for registering (red/structural)
-datatype = 'BRUKER'; %BRUKER or SCANIMAGE
+downsampleRates = [1/16 1/8 1/4 1/2 1];
+maxMovement = 1/8;
+ChunkProcess =   0; %flag to apply shifts across batches of images
+doimagSpatSamp = 0; %flag to use 0.5x downsampling
+useCh2template = 1; %use Ch2 for registering (red/structural)
+datatype = 'BRUKER'; %BRUKER or SCANIMAGE - (SCANIMAGE uses bigtiffreader and file names are different)
+%%%%%%%
+ImageVol = 71; %number of slices NEED TO AUTOMATE
+%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 %data location and folder(s)
-DATES{1} = '08302022'; FNAMES{1} = [2 3 5 6 7]; %re-run with downsamp
-
+%BRUKER files are MarkPoints or SingleImage or TSeries
+%SCANIMAGE files are user-defined names - but aiming to label as 'TSeries-date-xxx'
+DATES{1} = '10262022'; FNAMES{1} = [5 10 1:4 6:9];
 for sesh = 1:length(DATES)
 date = DATES{sesh};
 fnames = FNAMES{sesh};
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
-%find image location
+%%find image location
 organizeSCANIMAGEFiles();
 folderList = gettargetFolders2(['D:\',datatype],date,fnames,'TSeries');
-%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 for k = 1:length(folderList)
     tic;
     cd(['D:\',datatype,'\',folderList(k).name]);
@@ -59,21 +64,19 @@ for k = 1:length(folderList)
         
         for frmn = 1:mFrames
             imgStack(:,:,frmn) = ScanImageTiffReader(fileList(frmn).name).data;
-        end    
+        end   
     end
 
     if useCh2template && imgInfo.isCh2
-        imgStack = imgStack(:,:,2:2:end);
-    elseif ~useCh2template && imgInfo.isCh2
-        imgStack = imgStack(:,:,1:2:end);
+%         imgStack = imgStack(:,:,ImageVol+1:ImageVol*2);
+%     elseif ~useCh2template && imgInfo.isCh2
+        imgStack = imgStack(:,:,1:ImageVol);
     end
-    
+
     %%%%%%%%%%%%%%%%%%%%%%%%%%%
     % generate a template using brightest images
     imgStack = squeeze(imgStack);
-    dat = squeeze(squeeze(sum(sum(imgStack,1),2)));
-    [~,id] = sort(dat);
-    template = mean(imgStack(:,:,id(end-30:end)),3);
+    template = mean(imgStack,3);
     if doimagSpatSamp==1
         template = imresize(template,.5,'bilinear');
     end
@@ -84,7 +87,8 @@ for k = 1:length(folderList)
     batches={};
     if singleimages==1
 
-        BatchSize = 500;
+        BatchSize = ImageVol*2;
+
         for j = 1:ceil(length(fileList)/BatchSize)
             if j~=ceil(length(fileList)/BatchSize)
                 batches{j} = BatchSize*(j-1)+1:BatchSize*j;
@@ -100,17 +104,19 @@ for k = 1:length(folderList)
         end
     
     end
-
+    
     %%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %begin working files
+    %%begin working files
     if (strcmp(datatype,'SCANIMAGE') && (depth>=500)) || (strcmp(datatype,'BRUKER'))
         for j = 1:length(batches)
+
             %build stack
             imgStack = [];
             for frmn = batches{j}
                 imgStack = cat(3,imgStack,ScanImageTiffReader(fileList(frmn).name).data);
             end
             imgStack = squeeze(imgStack);
+
             %%%%%%%%%%%%%%%%%%%%%%%%%%%
             %2x spatial downsampling
             if doimagSpatSamp>0
@@ -127,31 +133,27 @@ for k = 1:length(folderList)
                 imgStack = imgStack(1:size(imgStack,1)/2,1:size(imgStack,2)/2,:);
                 disp(['spat resamp and thresh done'])
             end
+
             %%%%%%%%%%%%%%%%%%%%%%%%%%%
             %if using Ch2 for template
             if useCh2template
-                ch1Stack = imgStack(:,:,1:2:end);
-                imgStack = imgStack(:,:,2:2:end);
+%                 ch1Stack = imgStack(:,:,1:2:end);
+%                 imgStack = imgStack(:,:,2:2:end);
+%             else
+                ch1Stack = imgStack(:,:,ImageVol+1:ImageVol*2);
+                imgStack = imgStack(:,:,1:ImageVol);
             end
             [height,width,depth] = size(imgStack);
 
             %%%%%%%%%%%%%%%%%%%%%%%%%%%
-            %NoRMCorreSetParms
-            options_rigid = NoRMCorreSetParms('d1',size(imgStack,1),'d2',size(imgStack,2),'grid_size',[gridWidth,gridHeight],'overlap_pre',op,'bin_width',50,'max_shift',100,'us_fac',50,'iter',niter);
-            options_rigid.use_parallel = 1;
-            %Run
-            disp('running NoRMCorre')
-            [imgStack,shifts,~] = normcorre(imgStack,options_rigid,template);
-            %apply Ch2 shifts to Ch1
-            if useCh2template
-                ch1Stack = apply_shifts(ch1Stack,shifts,options_rigid);
-            end
+            %%begin working files
+            [imgStack,ch1Stack]=rigidReg(imgStack,ch1Stack,template,ChunkProcess,useCh2template,downsampleRates,maxMovement);
+
             %%%%%%%%%%%%%%%%%%%%%%%%%%%
             %save images outputDir
+            filenameCh1 = [outputDirCh1 '\' sprintf('%06i', j ) '.tif'];
+            filenameCh2 = [outputDirCh2 '\' sprintf('%06i', j ) '.tif'];
             for frmn = 1:size(imgStack,3)
-
-                filenameCh1 = [outputDirCh1 '\' sprintf('%06i',j) '.tif'];
-                filenameCh2 = [outputDirCh2 '\' sprintf('%06i',j) '.tif'];
 
                 if frmn == 1
                     if useCh2template
@@ -159,6 +161,7 @@ for k = 1:length(folderList)
                         imwrite(uint16(imgStack(:,:,frmn))',filenameCh2,'tif','write','overwrite','compression','none')
                     else
                         imwrite(uint16(imgStack(:,:,frmn))',filenameCh1,'tif','write','overwrite','compression','none')
+                        imwrite(uint16(ch1Stack(:,:,frmn))',filenameCh2,'tif','write','overwrite','compression','none')
                     end
                 else
                     if useCh2template
@@ -166,17 +169,25 @@ for k = 1:length(folderList)
                         imwrite(uint16(imgStack(:,:,frmn))',filenameCh2,'tif','write','append','compression','none')
                     else
                         imwrite(uint16(imgStack(:,:,frmn))',filenameCh1,'tif','write','append','compression','none')
+                        imwrite(uint16(ch1Stack(:,:,frmn))',filenameCh2,'tif','write','overwrite','compression','none')
                     end
                 end
             end
-
-            disp(['Saved Images: ',outputDirCh1]);
-            toc;
         end
         save([outputDir,'\imgInfo'],'imgInfo')
         toc
     end
 end
 end
-clear 
 delete(gcp)
+
+
+
+
+
+
+
+
+
+
+

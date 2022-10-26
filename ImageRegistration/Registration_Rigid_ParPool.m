@@ -3,10 +3,12 @@
 % usually used for large datasets
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+parpool
 %% initialize params
 downsampleRates = [1/16 1/8 1/4 1/2 1];
 maxMovement = 1/8;
-ChunkProcess =   100; %flag to apply shifts across batches of images
+ChunkProcess =   0; %flag to apply shifts across batches of images
 doimagSpatSamp = 0; %flag to use 0.5x downsampling
 useCh2template = 0; %use Ch2 for registering (red/structural)
 datatype = 'BRUKER'; %BRUKER or SCANIMAGE - (SCANIMAGE uses bigtiffreader and file names are different)
@@ -14,14 +16,14 @@ datatype = 'BRUKER'; %BRUKER or SCANIMAGE - (SCANIMAGE uses bigtiffreader and fi
 %data location and folder(s)
 %BRUKER files are MarkPoints or SingleImage or TSeries
 %SCANIMAGE files are user-defined names - but aiming to label as 'TSeries-date-xxx'
-DATES{1} = '10212022'; FNAMES{1} = [1];
+DATES{1} = '10262022'; FNAMES{1} = [1];
 for sesh = 1:length(DATES)
 date = DATES{sesh};
 fnames = FNAMES{sesh};
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%find image location
 organizeSCANIMAGEFiles();
-folderList = gettargetFolders2(['D:\',datatype],date,fnames,'ZSeries');
+folderList = gettargetFolders2(['D:\',datatype],date,fnames,'TSeries');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 for k = 1:length(folderList)
@@ -81,10 +83,10 @@ for k = 1:length(folderList)
     %%%%%%%%%%%%%%%%%%%%%%%%%%%
     %generate batches to process
 
+    batches={};
     if singleimages==1
 
         BatchSize = 1000;
-        batches={};
         for j = 1:ceil(length(fileList)/BatchSize)
             if j~=ceil(length(fileList)/BatchSize)
                 batches{j} = BatchSize*(j-1)+1:BatchSize*j;
@@ -102,7 +104,7 @@ for k = 1:length(folderList)
     end
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %begin working files
+    %% begin working files
     if (strcmp(datatype,'SCANIMAGE') && (depth>=500)) || (strcmp(datatype,'BRUKER'))
         for j = 1:length(batches)
 

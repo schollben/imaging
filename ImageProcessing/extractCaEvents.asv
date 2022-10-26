@@ -78,7 +78,10 @@ elseif strcmp(fld,'dff') || strcmp(fld,'dffRes')
     
     dff(isnan(dff)) = nanmean(dff);
 
-    [eventamps,events]= findpeaks(dff,'MinPeakDistance',4,'MinPeakHeight',noiseSD*SDCUTTOFF);
+    [amps,locs]= findpeaks(dff,'MinPeakDistance',4,'MinPeakHeight',noiseSD*SDCUTTOFF);
+
+    events = locs(amps>(noiseSD*SDCUTTOFF));
+
+    eventamps = amps(amps>(noiseSD*SDCUTTOFF));
 
 end
-

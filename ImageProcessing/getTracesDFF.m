@@ -10,19 +10,19 @@
 %%%%%%%%%%%%%%%%%%%%%%
 
 %%initialize params
-date = '09222022';
-filenum = 3;
-stimulusfile = 2;                   %set to -1 if there is no stimulus presented (not needed for SCANIMAGE save data?)
+date = '10082022';
+filenum = 5;
+stimulusfile = 6;                   %set to -1 if there is no stimulus presented (not needed for SCANIMAGE save data?)
 stimInfo = [1.5 0 0];               %[duration prestim *slag*]
-datatype = 'BRUKER';             %BRUKER or SCANIMAGE 
+datatype = 'SCANIMAGE';                %BRUKER or SCANIMAGE 
 saveLocation = 'D:\processed\';     %might change depending on machine
 doNeuropil = 0;                     %extract neuropil signal for subtraction?
-doResample = 1;
-photostimTrigs = 1;
+doResample = 1;                     %downsample dff?
+is2pOpto = 0;                       %2pOpto
 
 %%%%%%%%%%%%%%%%%%%%%%
 %%get data locations
-tic; folderList = gettargetFolders2(['D:\',datatype,'\'],date,filenum);
+tic; folderList = gettargetFolders2(['D:\',datatype,'\'],date,filenum,'TSeries');
 
 for k = 1:length(folderList)
 
@@ -221,7 +221,6 @@ for k = 1:length(folderList)
             ce(1).frameTriggers = frameTriggers;
 
 
-
             disp 'stimulus times and sync with two-photon'
             stimulusTriggers = medfilt1(Vrec(:,2),101);
             stimulusTriggers(stimulusTriggers<0) = 0;
@@ -231,6 +230,14 @@ for k = 1:length(folderList)
             [~,stimOff]=findpeaks(stimulusTriggers,'MinPeakDistance',1e3,'MinPeakHeight',max(stimulusTriggers) - max(stimulusTriggers)*.9);
             ce(1).stimOff = stimOff;
 
+            if is2pOpto
+                disp '2pOpto triggers'
+                stimulusTriggers = medfilt1(Vrec(:,3),51);
+                stimulusTriggers(stimulusTriggers<0) = 0;
+                [~,photostimTrig]=findpeaks(stimulusTriggers,'MinPeakDistance',1e4,'MinPeakHeight',max(stimulusTriggers) - max(stimulusTriggers)*.9);
+                ce(1).photostimTrig = photostimTrig;
+            end
+
             cd(['D:\Pyschopy\',date(5:end),'-',date(1:2),'-',date(3:4)])
             pyschopyFile = readmatrix(['T',sprintf('%03d',stimulusfile),'.txt']);
 
@@ -238,12 +245,31 @@ for k = 1:length(folderList)
             stimstr = textscan(fidi, '%s%s', 'CollectOutput',1);
             fclose(fidi)
 
-            stimID = pyschopyFile(:,1);
-            ce(1).stimID = stimID;
-            ce(1).stimstr = stimstr{1};
-            uniqStims = unique(stimID);
-            ce(1).uniqStims = uniqStims;
-            ce(1).stimProperties = pyschopyFile(:,2:end);
+            if ~is2pOpto
+
+                stimID = pyschopyFile(:,1);
+                ce(1).stimID = stimID;
+                ce(1).stimstr = stimstr{1};
+                uniqStims = unique(stimID);
+                ce(1).uniqStims = uniqStims;
+
+                ce(1).stimProperties = pyschopyFile(:,2:end);
+
+            elseif is2pOpto
+
+                stimID = pyschopyFile(:,3);
+                ce(1).stimID = stimID;
+                ce(1).stimstr = stimstr{1};
+                uniqStims = unique(stimID);
+                ce(1).uniqStims = uniqStims;
+
+                ce(1).stimProperties = pyschopyFile(:,4:end);
+
+                ce(1).targetNumber = pyschopyFile(:,1);
+
+                ce(1).targetTrial = pyschopyFile(:,2);
+
+            end
 
             if length(stimOn)~=length(stimID)
                 disp 'mismatch between number of stimulus triggers and stimuli IDs'
@@ -255,14 +281,27 @@ for k = 1:length(folderList)
                 [~,frameloc] = min(abs(stimOn(ss)-frameTriggers));
                 stimOn2pFrame(ss) = frameloc;
             end
-
             ce(1).stimOn2pFrame = stimOn2pFrame;
+
+            if is2pOpto
+                TargetStim2pFrame = [];
+                for ss = 1:length(photostimTrig)
+                    [~,frameloc] = min(abs(photostimTrig(ss)-frameTriggers));
+                    TargetStim2pFrame(ss) = frameloc;
+                end
+                ce(1).TargetStim2pFrame = TargetStim2pFrame;
+            end
 
             %%%%%%%%%%%%%%%%%
             if doResample
                 %need to modify effective framerate and stimOn2pFrame
                 ce(1).framePeriod =  ce(1).framePeriod * downsampvalue;
                 ce(1).stimOn2pFrame = floor( ce(1).stimOn2pFrame / downsampvalue);
+                
+                if is2pOpto
+                    ce(1).TargetStim2pFrame = floor( ce(1).TargetStim2pFrame / downsampvalue);
+                end
+
             end
         else
             disp 'no stimulus triggers recorded'
@@ -280,6 +319,21 @@ for k = 1:length(folderList)
 
         %dendritic substraction
         DendriteSubtraction(1)        %argin = 1 - use full trace for subtraction, argin = 2 - use stimuli ('stimulus duration' periods)
+
+
+        %extract some basic responses from cyc or cycRes
+        if stimulusfile>-1
+            for cc = 1:length(ce)
+                if ~ce(cc).spine
+                    [resp,resps,resperr] = computePeakResp(ce(cc).cyc);
+                else
+                    [resp,resps,resperr] = computePeakResp(ce(cc).cycRes);
+                end
+                ce(cc).resp = resp;
+                ce(cc).resps = resps;
+                ce(cc).resperr = resperr;
+            end
+        end
 
         %%%%%%%%%%%
         disp saving

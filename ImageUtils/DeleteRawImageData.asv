@@ -8,19 +8,15 @@ for ii = 1:length(folders)
     folderName = folders(ii).name;
     if contains(folderName,'TSeries')
         cd(['D:\',datatype,'\',folderName])
-        tFileFolders = dir('*.tif');
+        tFileFolders = dir('*');
         if exist([cd,'/Registered'],'dir') 
+            cd([cd,'/Registered/Channel1'])
             if exist([cd,'/Registered/Channel1/000001.tiff'],'file')
-                disp(['deleting files from:  ',cd])
                 for ff = 1:length(tFileFolders)
-                    if contains(tFileFolders(ff).name,'TSeries')
-                        filename = [cd,'\',tFileFolders(ff).name];
-                        delete(filename)
-                    end
-                end
             end
-        else
-            disp([cd,'----> not registered yet'])
         end
     end
 end
+% %% 
+%                     filename = ['M:\',folderName,'\',...
+%                         tFileFolders(j)

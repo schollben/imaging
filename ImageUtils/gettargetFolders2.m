@@ -27,6 +27,7 @@ else
 
     if ~isempty(fnames)
         [~,targetFolders]=ismember(fnames,folderListNames);
+        targetFolders = targetFolders(targetFolders~=0);
         folderList = folderList(targetFolders);
     end
 
