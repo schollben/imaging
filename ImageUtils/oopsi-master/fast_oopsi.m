@@ -192,7 +192,7 @@ while conv == 0
     if V.fast_plot == 1, MakePlot(n,F,P,V); end % plot results from previous iteration
     i               = i+1;                      % update iteratation number
     V.fast_iter_tot = i;                        % record of total # of iterations
-    P               = est_params(n,C,F,P,b);    % update parameters based on previous iteration
+    P               = est_params(n,C,F,P);    % update parameters based on previous iteration
     [n C posts(i)]  = est_MAP(F,P);             % update inferred spike train based on new parameters
     
     if posts(i)>post_max || V.fast_ignore_post==1% if this is the best one, keep n and P

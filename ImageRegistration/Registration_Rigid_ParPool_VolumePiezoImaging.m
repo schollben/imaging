@@ -19,7 +19,7 @@ ImageVol = 71; %number of slices NEED TO AUTOMATE
 %data location and folder(s)
 %BRUKER files are MarkPoints or SingleImage or TSeries
 %SCANIMAGE files are user-defined names - but aiming to label as 'TSeries-date-xxx'
-DATES{1} = '10262022'; FNAMES{1} = [5 10 1:4 6:9];
+DATES{1} = '10262022'; FNAMES{1} = [10 1:4 6:9];
 for sesh = 1:length(DATES)
 date = DATES{sesh};
 fnames = FNAMES{sesh};
@@ -108,10 +108,11 @@ for k = 1:length(folderList)
     %%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%begin working files
     if (strcmp(datatype,'SCANIMAGE') && (depth>=500)) || (strcmp(datatype,'BRUKER'))
-        for j = 1:length(batches)
+        parfor j = 1:length(batches)
 
             %build stack
             imgStack = [];
+            ch1Stack = [];
             for frmn = batches{j}
                 imgStack = cat(3,imgStack,ScanImageTiffReader(fileList(frmn).name).data);
             end
@@ -157,17 +158,17 @@ for k = 1:length(folderList)
 
                 if frmn == 1
                     if useCh2template
-                        imwrite(uint16(ch1Stack(:,:,frmn))',filenameCh1,'tif','write','overwrite','compression','none')
-                        imwrite(uint16(imgStack(:,:,frmn))',filenameCh2,'tif','write','overwrite','compression','none')
-                    else
+%                         imwrite(uint16(ch1Stack(:,:,frmn))',filenameCh1,'tif','write','overwrite','compression','none')
+%                         imwrite(uint16(imgStack(:,:,frmn))',filenameCh2,'tif','write','overwrite','compression','none')
+%                     else
                         imwrite(uint16(imgStack(:,:,frmn))',filenameCh1,'tif','write','overwrite','compression','none')
                         imwrite(uint16(ch1Stack(:,:,frmn))',filenameCh2,'tif','write','overwrite','compression','none')
                     end
                 else
                     if useCh2template
-                        imwrite(uint16(ch1Stack(:,:,frmn))',filenameCh1,'tif','write','append','compression','none')
-                        imwrite(uint16(imgStack(:,:,frmn))',filenameCh2,'tif','write','append','compression','none')
-                    else
+%                         imwrite(uint16(ch1Stack(:,:,frmn))',filenameCh1,'tif','write','append','compression','none')
+%                         imwrite(uint16(imgStack(:,:,frmn))',filenameCh2,'tif','write','append','compression','none')
+%                     else
                         imwrite(uint16(imgStack(:,:,frmn))',filenameCh1,'tif','write','append','compression','none')
                         imwrite(uint16(ch1Stack(:,:,frmn))',filenameCh2,'tif','write','overwrite','compression','none')
                     end

@@ -5,15 +5,12 @@ if nargin<3
     filetype = 'TSeries';
 end
 cd(loc)
-
 % % if strcmp(loc(4:end-1),'BRUKER')
 % %     folderList = dir(['*','TSeries-',date,'*']);
 % % elseif strcmp(loc(4:end-1),'SCANIMAGE')
 % %     folderList = dir(['*','TSeries_',date(end-3:end),'-',date(1:2),'-',date(3:4),'*']);
 % % end
-
 folderList = dir(['*',filetype,'-',date,'*']);
-
 
 if isempty(folderList)
 

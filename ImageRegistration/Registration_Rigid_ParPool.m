@@ -8,15 +8,15 @@ parpool
 %% initialize params
 downsampleRates = [1/16 1/8 1/4 1/2 1];
 maxMovement = 1/8;
-ChunkProcess =   0; %flag to apply shifts across batches of images
+ChunkProcess =   230; %flag to apply shifts across batches of images
 doimagSpatSamp = 0; %flag to use 0.5x downsampling
-useCh2template = 0; %use Ch2 for registering (red/structural)
-datatype = 'BRUKER'; %BRUKER or SCANIMAGE - (SCANIMAGE uses bigtiffreader and file names are different)
+useCh2template = 2; %use Ch2 for registering (red/structural)
+datatype = 'SCANIMAGE'; %BRUKER or SCANIMAGE - (SCANIMAGE uses bigtiffreader and file names are different)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 %data location and folder(s)
 %BRUKER files are MarkPoints or SingleImage or TSeries
 %SCANIMAGE files are user-defined names - but aiming to label as 'TSeries-date-xxx'
-DATES{1} = '10262022'; FNAMES{1} = [1];
+DATES{1} = '10282022'; FNAMES{1} = [1];
 for sesh = 1:length(DATES)
 date = DATES{sesh};
 fnames = FNAMES{sesh};
@@ -104,8 +104,8 @@ for k = 1:length(folderList)
     end
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %% begin working files
-    if (strcmp(datatype,'SCANIMAGE') && (depth>=500)) || (strcmp(datatype,'BRUKER'))
+    %%begin working files
+    if (strcmp(datatype,'SCANIMAGE') && (depth>=250)) || (strcmp(datatype,'BRUKER'))
         for j = 1:length(batches)
 
             %build stack

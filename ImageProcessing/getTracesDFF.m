@@ -14,11 +14,11 @@ date = '10082022';
 filenum = 5;
 stimulusfile = 6;                   %set to -1 if there is no stimulus presented (not needed for SCANIMAGE save data?)
 stimInfo = [1.5 0 0];               %[duration prestim *slag*]
-datatype = 'SCANIMAGE';                %BRUKER or SCANIMAGE 
+datatype = 'BRUKER';                %BRUKER or SCANIMAGE 
 saveLocation = 'D:\processed\';     %might change depending on machine
 doNeuropil = 0;                     %extract neuropil signal for subtraction?
 doResample = 1;                     %downsample dff?
-is2pOpto = 0;                       %2pOpto
+is2pOpto = 1;                       %2pOpto
 
 %%%%%%%%%%%%%%%%%%%%%%
 %%get data locations
@@ -71,7 +71,7 @@ for k = 1:length(folderList)
             if strcmp(sROI{cc}.strType,'PolyLine') %DENDRITE ROI
                 mask2d = genPolyLineROI(nmCoord,sROI{cc}.nStrokeWidth);
             else
-                mask2d = inpolygon( x, y, nmCoord(:,1), nmCoord(:,2));
+                mask2d = inpolygon( x, y, nmCoord(:,2), nmCoord(:,1)); %%%MAKE SURE THIS CORRECT%%%
             end
             neuropilmask = neuropilmask + mask2d;
             sparse3dmask = ndSparse( repmat( mask2d , 1, 1, 1000)); %expect 1000-frame stacks
@@ -133,7 +133,7 @@ for k = 1:length(folderList)
                 ftrace = mean( reshape (imgstack(  maskstruct(cc).mask(:,:,1:size(imgstack,3)) ), length(find(ce(cc).mask2d)) , size(imgstack,3) , 1));
                 ce(cc).raw = cat(1, ce(cc).raw, ftrace');
             end
-            
+
             if doNeuropil
                 %neuropil trace
                 %only added to ce(1)
@@ -153,9 +153,8 @@ for k = 1:length(folderList)
         disp 'calculate df/f for all ROIs'
         downsampvalue = 4;
         for cc = 1:length(ce)
-            ce(cc).raw(1:30) = nan; %Bruker scope initial images are messed up
             if doResample
-                dff = filterBaseline_dFcomp2(resample(ce(cc).raw,1,downsampvalue));
+                dff = filterBaseline_dFcomp2(resample(ce(cc).raw,1,downsampvalue),45);
             else
                 dff = filterBaseline_dFcomp2(ce(cc).raw,99*4);
             end
