@@ -8,17 +8,17 @@
 % denType = 'basal'; 
 % scale = 0; %pixel per microns
 %%%%%%%%%%%%%%%%%%%%%%
-
+clear
 %%initialize params
-date = '10082022';
-filenum = 5;
-stimulusfile = 6;                   %set to -1 if there is no stimulus presented (not needed for SCANIMAGE save data?)
+date = '08212022';
+filenum = 7;
+stimulusfile = 12;                  %set to -1 if there is no stimulus presented (not needed for SCANIMAGE save data?)
 stimInfo = [1.5 0 0];               %[duration prestim *slag*]
 datatype = 'BRUKER';                %BRUKER or SCANIMAGE 
 saveLocation = 'D:\processed\';     %might change depending on machine
 doNeuropil = 0;                     %extract neuropil signal for subtraction?
 doResample = 1;                     %downsample dff?
-is2pOpto = 1;                       %2pOpto
+is2pOpto = 0;                       %2pOpto
 
 %%%%%%%%%%%%%%%%%%%%%%
 %%get data locations
@@ -54,6 +54,9 @@ for k = 1:length(folderList)
         end
     end
 
+    imgInfo.sizeX = 256;
+    imgInfo.sizeY = 256;
+
     %%%%%%%%%%%
     if exist('sROI','var') && exist('imgInfo','var')
 
@@ -66,12 +69,12 @@ for k = 1:length(folderList)
 
         for cc = 1:numCells
 
-            nmCoord = sROI{cc}.mnCoordinates;
+            nmCoord = [sROI{cc}.mnCoordinates(:,2) sROI{cc}.mnCoordinates(:,1)];
 
             if strcmp(sROI{cc}.strType,'PolyLine') %DENDRITE ROI
-                mask2d = genPolyLineROI(nmCoord,sROI{cc}.nStrokeWidth);
+                mask2d = genPolyLineROI(nmCoord,sROI{cc}.nStrokeWidth,imgInfo);
             else
-                mask2d = inpolygon( x, y, nmCoord(:,2), nmCoord(:,1)); %%%MAKE SURE THIS CORRECT%%%
+                mask2d = inpolygon( x, y, nmCoord(:,1), nmCoord(:,2));
             end
             neuropilmask = neuropilmask + mask2d;
             sparse3dmask = ndSparse( repmat( mask2d , 1, 1, 1000)); %expect 1000-frame stacks

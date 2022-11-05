@@ -9,12 +9,12 @@ gridWidth = 64; %decrease for better registration (in px)
 gridHeight = 64; %decrease for better registration (in px)
 op = 32; %grid overlap 
 %see more NormCorre parameters below
-doimagSpatSamp = 1; %flag to use 0.5x downsampling
+doimagSpatSamp = 0; %flag to use 0.5x downsampling
 useCh2template = 0; %use Ch2 for registering (red/structural)
 datatype = 'BRUKER'; %BRUKER or SCANIMAGE
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 %data location and folder(s)
-DATES{1} = '08302022'; FNAMES{1} = [2 3 5 6 7]; %re-run with downsamp
+DATES{1} = '08212022'; FNAMES{1} = [3]; %re-run with downsamp
 
 for sesh = 1:length(DATES)
 date = DATES{sesh};
