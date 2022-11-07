@@ -9,14 +9,14 @@ parpool
 downsampleRates = [1/16 1/8 1/4 1/2 1];
 maxMovement = 1/8;
 ChunkProcess =   0; %flag to apply shifts across batches of images
-doimagSpatSamp = 1; %flag to use 0.5x downsampling
+doimagSpatSamp = 0; %flag to use 0.5x downsampling
 useCh2template = 0; %use Ch2 for registering (red/structural)
 datatype = 'BRUKER'; %BRUKER or SCANIMAGE - (SCANIMAGE uses bigtiffreader and file names are different)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 %data location and folder(s)
 %BRUKER files are MarkPoints or SingleImage or TSeries
 %SCANIMAGE files are user-defined names - but aiming to label as 'TSeries-date-xxx'
-DATES{1} = '08212022'; FNAMES{1} = [1:4]; 
+DATES{1} = '08212022'; FNAMES{1} = [3]; 
 for sesh = 1:length(DATES)
 date = DATES{sesh};
 fnames = FNAMES{sesh};
@@ -79,7 +79,7 @@ for k = 1:length(folderList)
     if doimagSpatSamp==1
         template = imresize(template,.5,'bilinear');
         imgInfo.sizeX =  imgInfo.sizeX/2;
-        imgInfo.sizey =  imgInfo.sizey/2;
+        imgInfo.sizeY =  imgInfo.sizeY/2;
     end
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%

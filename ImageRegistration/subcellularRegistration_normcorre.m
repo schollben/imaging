@@ -77,7 +77,7 @@ for k = 1:length(folderList)
     if doimagSpatSamp==1
         template = imresize(template,.5,'bilinear');
         imgInfo.sizeX =  imgInfo.sizeX/2;
-        imgInfo.sizey =  imgInfo.sizey/2;
+        imgInfo.sizeY =  imgInfo.sizeY/2;
     end
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%

@@ -11,8 +11,8 @@
 clear
 %%initialize params
 date = '08212022';
-filenum = 1;
-stimulusfile = 2;                  %set to -1 if there is no stimulus presented (not needed for SCANIMAGE save data?)
+filenum = 3;
+stimulusfile = 4;                  %set to -1 if there is no stimulus presented (not needed for SCANIMAGE save data?)
 stimInfo = [3 0 0];               %[duration prestim *slag*]
 datatype = 'BRUKER';                %BRUKER or SCANIMAGE 
 saveLocation = 'D:\processed\';     %might change depending on machine
@@ -21,7 +21,7 @@ doResample = 1;                     %downsample dff?
 is2pOpto = 0;                       %2pOpto
 
 %%%%%%%%%%%%%%%%%%%%%%
-%%get data locations
+%%get data locations                 
 tic; folderList = gettargetFolders2(['D:\',datatype,'\'],date,filenum,'TSeries');
 
 for k = 1:length(folderList)
@@ -54,8 +54,8 @@ for k = 1:length(folderList)
         end
     end
 
-%     imgInfo.sizeX = 256;
-%     imgInfo.sizeY = 256;
+    imgInfo.sizeX = 256;
+    imgInfo.sizeY = 256;
 
     %%%%%%%%%%%
     if exist('sROI','var') && exist('imgInfo','var')
