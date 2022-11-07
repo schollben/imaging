@@ -11,9 +11,9 @@
 clear
 %%initialize params
 date = '08212022';
-filenum = 7;
-stimulusfile = 12;                  %set to -1 if there is no stimulus presented (not needed for SCANIMAGE save data?)
-stimInfo = [1.5 0 0];               %[duration prestim *slag*]
+filenum = 1;
+stimulusfile = 2;                  %set to -1 if there is no stimulus presented (not needed for SCANIMAGE save data?)
+stimInfo = [3 0 0];               %[duration prestim *slag*]
 datatype = 'BRUKER';                %BRUKER or SCANIMAGE 
 saveLocation = 'D:\processed\';     %might change depending on machine
 doNeuropil = 0;                     %extract neuropil signal for subtraction?
@@ -54,8 +54,8 @@ for k = 1:length(folderList)
         end
     end
 
-    imgInfo.sizeX = 256;
-    imgInfo.sizeY = 256;
+%     imgInfo.sizeX = 256;
+%     imgInfo.sizeY = 256;
 
     %%%%%%%%%%%
     if exist('sROI','var') && exist('imgInfo','var')

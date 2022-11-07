@@ -7,14 +7,14 @@
 niter = 1; %number of iterations
 gridWidth = 64; %decrease for better registration (in px)
 gridHeight = 64; %decrease for better registration (in px)
-op = 32; %grid overlap 
+op = 16%32; %grid overlap 
 %see more NormCorre parameters below
-doimagSpatSamp = 0; %flag to use 0.5x downsampling
+doimagSpatSamp = 1; %flag to use 0.5x downsampling
 useCh2template = 0; %use Ch2 for registering (red/structural)
 datatype = 'BRUKER'; %BRUKER or SCANIMAGE
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 %data location and folder(s)
-DATES{1} = '08212022'; FNAMES{1} = [3]; %re-run with downsamp
+DATES{1} = '08302022'; FNAMES{1} = [4]; %re-run with downsamp
 
 for sesh = 1:length(DATES)
 date = DATES{sesh};
@@ -76,6 +76,8 @@ for k = 1:length(folderList)
     template = mean(imgStack(:,:,id(end-30:end)),3);
     if doimagSpatSamp==1
         template = imresize(template,.5,'bilinear');
+        imgInfo.sizeX =  imgInfo.sizeX/2;
+        imgInfo.sizey =  imgInfo.sizey/2;
     end
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%
