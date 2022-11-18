@@ -10,18 +10,18 @@
 %%%%%%%%%%%%%%%%%%%%%%
 clear
 %%initialize params
-date = '09222022';
+date = '10222022';
 filenum = 6;
-stimulusfile = 12;                  %set to -1 if there is no stimulus presented (not needed for SCANIMAGE save data?)
-stimInfo = [1.5 0 0];                %[duration prestim *slag*]
-datatype = 'BRUKER';                %BRUKER or SCANIMAGE 
+stimulusfile = -1;                   %set to -1 if there is no stimulus presented (not needed for SCANIMAGE save data?)
+stimInfo = [2 0 0];                 %[duration prestim *slag*]
+datatype = 'SCANIMAGE';             %BRUKER or SCANIMAGE 
 saveLocation = 'D:\processed\';     %might change depending on machine
 doNeuropil = 0;                     %extract neuropil signal for subtraction?
 doResample = 1;                     %downsample dff?
 is2pOpto = 0;                       %2pOpto
 
 %%%%%%%%%%%%%%%%%%%%%%
-%%get data locations
+%%get data locations                 
 tic; folderList = gettargetFolders2(['D:\',datatype,'\'],date,filenum,'TSeries');
 
 for k = 1:length(folderList)
@@ -53,7 +53,7 @@ for k = 1:length(folderList)
             imgInfo.sizeY = 512;
         end
     end
-
+    
     %%%%%%%%%%%
     if exist('sROI','var') && exist('imgInfo','var')
 
@@ -69,7 +69,7 @@ for k = 1:length(folderList)
             nmCoord = [sROI{cc}.mnCoordinates(:,2) sROI{cc}.mnCoordinates(:,1)];
 
             if strcmp(sROI{cc}.strType,'PolyLine') %DENDRITE ROI
-                mask2d = genPolyLineROI(nmCoord,sROI{cc}.nStrokeWidth);
+                mask2d = genPolyLineROI(nmCoord,sROI{cc}.nStrokeWidth,imgInfo);
             else
                 mask2d = inpolygon( x, y, nmCoord(:,1), nmCoord(:,2));
             end
@@ -83,10 +83,10 @@ for k = 1:length(folderList)
             ce(cc).mask2d = sparse(mask2d);
             ce(cc).date = date;
             ce(cc).file = filenum;
-            if ischar(imgInfo.framePeriod)
+            if isfield(imgInfo,'framePeriod') && ischar(imgInfo.framePeriod)
                 ce(cc).framePeriod = str2double(imgInfo.framePeriod);
-            else
-                ce(cc).framePeriod = (imgInfo.framePeriod);
+            elseif isfield(imgInfo,'framerate')
+                ce(cc).framePeriod = 1/(imgInfo.framerate);
             end
             ce(cc).opticalZoom = imgInfo.opticalZoom;
 

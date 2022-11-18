@@ -16,7 +16,9 @@ datatype = 'BRUKER'; %BRUKER or SCANIMAGE - (SCANIMAGE uses bigtiffreader and fi
 %data location and folder(s)
 %BRUKER files are MarkPoints or SingleImage or TSeries
 %SCANIMAGE files are user-defined names - but aiming to label as 'TSeries-date-xxx'
-DATES{1} = '08212022'; FNAMES{1} = [3]; 
+DATES{1} = '08302022'; FNAMES{1} = [4];
+DATES{2} = '08212022'; FNAMES{2} = [3];
+
 for sesh = 1:length(DATES)
 date = DATES{sesh};
 fnames = FNAMES{sesh};

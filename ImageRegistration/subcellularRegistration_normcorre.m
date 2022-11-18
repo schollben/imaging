@@ -4,12 +4,12 @@
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% initialize params
-niter = 1; %number of iterations
-gridWidth = 64; %decrease for better registration (in px)
-gridHeight = 64; %decrease for better registration (in px)
-op = 16%32; %grid overlap 
+niter = 5; %number of iterations
+gridWidth = 128; %decrease for better registration (in px)
+gridHeight = 128; %decrease for better registration (in px)
+op = 32; %grid overlap 
 %see more NormCorre parameters below
-doimagSpatSamp = 1; %flag to use 0.5x downsampling
+doimagSpatSamp = 0; %flag to use 0.5x downsampling
 useCh2template = 0; %use Ch2 for registering (red/structural)
 datatype = 'BRUKER'; %BRUKER or SCANIMAGE
 %%%%%%%%%%%%%%%%%%%%%%%%%%%

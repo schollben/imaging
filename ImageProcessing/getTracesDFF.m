@@ -10,11 +10,11 @@
 %%%%%%%%%%%%%%%%%%%%%%
 clear
 %%initialize params
-date = '08212022';
-filenum = 3;
-stimulusfile = 4;                  %set to -1 if there is no stimulus presented (not needed for SCANIMAGE save data?)
-stimInfo = [3 0 0];               %[duration prestim *slag*]
-datatype = 'BRUKER';                %BRUKER or SCANIMAGE 
+date = '10222022';
+filenum = 6;
+stimulusfile = -1;                   %set to -1 if there is no stimulus presented (not needed for SCANIMAGE save data?)
+stimInfo = [2 0 0];                 %[duration prestim *slag*]
+datatype = 'SCANIMAGE';             %BRUKER or SCANIMAGE 
 saveLocation = 'D:\processed\';     %might change depending on machine
 doNeuropil = 0;                     %extract neuropil signal for subtraction?
 doResample = 1;                     %downsample dff?
@@ -53,10 +53,7 @@ for k = 1:length(folderList)
             imgInfo.sizeY = 512;
         end
     end
-
-    imgInfo.sizeX = 256;
-    imgInfo.sizeY = 256;
-
+    
     %%%%%%%%%%%
     if exist('sROI','var') && exist('imgInfo','var')
 
@@ -86,10 +83,10 @@ for k = 1:length(folderList)
             ce(cc).mask2d = sparse(mask2d);
             ce(cc).date = date;
             ce(cc).file = filenum;
-            if ischar(imgInfo.framePeriod)
+            if isfield(imgInfo,'framePeriod') && ischar(imgInfo.framePeriod)
                 ce(cc).framePeriod = str2double(imgInfo.framePeriod);
-            else
-                ce(cc).framePeriod = (imgInfo.framePeriod);
+            elseif isfield(imgInfo,'framerate')
+                ce(cc).framePeriod = 1/(imgInfo.framerate);
             end
             ce(cc).opticalZoom = imgInfo.opticalZoom;
 
