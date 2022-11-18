@@ -12,7 +12,7 @@ clear
 %%initialize params
 date = '10222022';
 filenum = 6;
-stimulusfile = -1;                   %set to -1 if there is no stimulus presented (not needed for SCANIMAGE save data?)
+stimulusfile = 2;                   %set to -1 if there is no stimulus presented (not needed for SCANIMAGE save data?)
 stimInfo = [2 0 0];                 %[duration prestim *slag*]
 datatype = 'SCANIMAGE';             %BRUKER or SCANIMAGE 
 saveLocation = 'D:\processed\';     %might change depending on machine
@@ -183,6 +183,10 @@ for k = 1:length(folderList)
 
                 %get voltage recording (10kHz sampling)
                 voltageFiles = dir('*.csv');
+                if isempty(voltageFiles)
+                    cd(['D:\',datatype,'\',folderList(k).name,'\Registered\'])
+                    voltageFiles = dir('*.csv');
+                end
                 if length(voltageFiles)>1
                     disp 'why is there multiple voltage files??'
                 else
@@ -200,6 +204,10 @@ for k = 1:length(folderList)
             elseif strcmp(datatype,'SCANIMAGE') %.h5 files from wavesurfer
 
                 voltageFiles = dir('*.h5');
+                if isempty(voltageFiles)
+                    cd(['D:\',datatype,'\',folderList(k).name,'\Registered\'])
+                    voltageFiles = dir('*.h5');
+                end
                 if length(voltageFiles)>1
                     disp 'why is there multiple voltage files??'
                 else
@@ -220,7 +228,7 @@ for k = 1:length(folderList)
             ce(1).frameTriggers = frameTriggers;
 
 
-            disp 'stimulus times and sync with two-photon'
+            disp('stimulus times and sync with two-photon')
             stimulusTriggers = medfilt1(Vrec(:,2),101);
             stimulusTriggers(stimulusTriggers<0) = 0;
             stimulusTriggers = diff(stimulusTriggers);
@@ -230,7 +238,7 @@ for k = 1:length(folderList)
             ce(1).stimOff = stimOff;
 
             if is2pOpto
-                disp '2pOpto triggers'
+                disp('2pOpto triggers')
                 stimulusTriggers = medfilt1(Vrec(:,3),51);
                 stimulusTriggers(stimulusTriggers<0) = 0;
                 [~,photostimTrig]=findpeaks(stimulusTriggers,'MinPeakDistance',1e4,'MinPeakHeight',max(stimulusTriggers) - max(stimulusTriggers)*.9);
@@ -242,7 +250,7 @@ for k = 1:length(folderList)
 
             fidi = fopen(['T',sprintf('%03d',stimulusfile),'.txt'], 'rt');
             stimstr = textscan(fidi, '%s%s', 'CollectOutput',1);
-            fclose(fidi)
+            fclose(fidi);
 
             if ~is2pOpto
 
@@ -314,7 +322,7 @@ for k = 1:length(folderList)
         end
 
         %stimulus cyc generation - add peak response?
-        genstimcyc(stimInfo); %SCANIMAGE rig slagged by 0.5 sec?
+        genstimcyc(stimInfo);
 
         %dendritic substraction
         DendriteSubtraction(1)        %argin = 1 - use full trace for subtraction, argin = 2 - use stimuli ('stimulus duration' periods)
