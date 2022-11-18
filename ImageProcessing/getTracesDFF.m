@@ -10,13 +10,13 @@
 %%%%%%%%%%%%%%%%%%%%%%
 clear
 %%initialize params
-date = '10222022';
-filenum = 6;
-stimulusfile = 2;                   %set to -1 if there is no stimulus presented (not needed for SCANIMAGE save data?)
-stimInfo = [2 0 0];                 %[duration prestim *slag*]
+date = '11052022';
+filenum = 3;
+stimulusfile = 1;                   %set to -1 if there is no stimulus presented (not needed for SCANIMAGE save data?)
+stimInfo = [2 0 0.5];                 %[duration prestim *slag*]
 datatype = 'SCANIMAGE';             %BRUKER or SCANIMAGE 
 saveLocation = 'D:\processed\';     %might change depending on machine
-doNeuropil = 0;                     %extract neuropil signal for subtraction?
+doNeuropil = 1;                     %extract neuropil signal for subtraction?
 doResample = 1;                     %downsample dff?
 is2pOpto = 0;                       %2pOpto
 
