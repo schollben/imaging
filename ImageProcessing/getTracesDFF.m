@@ -10,14 +10,14 @@
 %%%%%%%%%%%%%%%%%%%%%%
 clear
 %%initialize params
-date = '11052022';
-filenum = 3;
-stimulusfile = 1;                   %set to -1 if there is no stimulus presented (not needed for SCANIMAGE save data?)
-stimInfo = [2 0 0.5];                 %[duration prestim *slag*]
-datatype = 'SCANIMAGE';             %BRUKER or SCANIMAGE 
+date = '08282022';
+filenum = 2;
+stimulusfile = 6;                   %set to -1 if there is no stimulus presented (not needed for SCANIMAGE save data?)
+stimInfo = [2 0 0];               %[duration prestim *slag*]
+datatype = 'BRUKER';             %BRUKER or SCANIMAGE (needs slag?)
 saveLocation = 'D:\processed\';     %might change depending on machine
 doNeuropil = 1;                     %extract neuropil signal for subtraction?
-doResample = 1;                     %downsample dff?
+doResample = 0;                     %downsample dff?
 is2pOpto = 0;                       %2pOpto
 
 %%%%%%%%%%%%%%%%%%%%%%
@@ -153,10 +153,16 @@ for k = 1:length(folderList)
         disp 'calculate df/f for all ROIs'
         downsampvalue = 4;
         for cc = 1:length(ce)
+            
+%             %%%%%%%%%%%%
+%             ce(cc).raw = -ce(cc).raw;
+%             ce(cc).raw = ce(cc).raw - min(ce(cc).raw);
+%             %%%%%%%%%%%%
+
             if doResample
-                dff = filterBaseline_dFcomp2(resample(ce(cc).raw,1,downsampvalue),45);
+                dff = filterBaseline_dFcomp2(resample( ce(cc).raw ,1,downsampvalue),45);
             else
-                dff = filterBaseline_dFcomp2(ce(cc).raw,99*4);
+                dff = filterBaseline_dFcomp2( ce(cc).raw ,99*4);
             end
             ce(cc).dff = dff;
         end

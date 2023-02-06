@@ -16,8 +16,7 @@ datatype = 'BRUKER'; %BRUKER or SCANIMAGE - (SCANIMAGE uses bigtiffreader and fi
 %data location and folder(s)
 %BRUKER files are MarkPoints or SingleImage or TSeries
 %SCANIMAGE files are user-defined names - but aiming to label as 'TSeries-date-xxx'
-DATES{1} = '08302022'; FNAMES{1} = [4];
-DATES{2} = '08212022'; FNAMES{2} = [3];
+DATES{1} = '12012022'; FNAMES{1} = [1:10];
 
 for sesh = 1:length(DATES)
 date = DATES{sesh};
@@ -110,7 +109,7 @@ for k = 1:length(folderList)
     %%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%begin working files
     if (strcmp(datatype,'SCANIMAGE') && (depth>=250)) || (strcmp(datatype,'BRUKER'))
-        for j = 1:length(batches)
+        parfor j = 1:length(batches)
 
             %build stack
             imgStack = [];

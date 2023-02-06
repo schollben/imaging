@@ -10,11 +10,11 @@ gridHeight = 128; %decrease for better registration (in px)
 op = 32; %grid overlap 
 %see more NormCorre parameters below
 doimagSpatSamp = 0; %flag to use 0.5x downsampling
-useCh2template = 0; %use Ch2 for registering (red/structural)
+useCh2template = 1; %use Ch2 for registering (red/structural)
 datatype = 'BRUKER'; %BRUKER or SCANIMAGE
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 %data location and folder(s)
-DATES{1} = '08302022'; FNAMES{1} = [4]; %re-run with downsamp
+DATES{1} = '11302022'; FNAMES{1} = [1 2]; %re-run with downsamp
 
 for sesh = 1:length(DATES)
 date = DATES{sesh};
@@ -22,7 +22,7 @@ fnames = FNAMES{sesh};
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 %find image location
 organizeSCANIMAGEFiles();
-folderList = gettargetFolders2(['D:\',datatype],date,fnames,'TSeries');
+folderList = gettargetFolders2(['D:\',datatype],date,fnames,'ZSeries');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 for k = 1:length(folderList)
     tic;
@@ -73,7 +73,8 @@ for k = 1:length(folderList)
     imgStack = squeeze(imgStack);
     dat = squeeze(squeeze(sum(sum(imgStack,1),2)));
     [~,id] = sort(dat);
-    template = mean(imgStack(:,:,id(end-30:end)),3);
+%     template = mean(imgStack(:,:,id(end-30:end)),3);
+    template = imgStack(:,:,id);
     if doimagSpatSamp==1
         template = imresize(template,.5,'bilinear');
         imgInfo.sizeX =  imgInfo.sizeX/2;

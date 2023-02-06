@@ -18,7 +18,7 @@ useCh2template = 0; %use Ch2 for registering (red/structural)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 %find image location and setup
 
-date = '05202022'; %date of the recording
+date = '11302022'; %date of the recording
 
 dataLocation = 'D:\TestData\'; %where is each set of folders to register
 
