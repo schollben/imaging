@@ -10,14 +10,14 @@
 %%%%%%%%%%%%%%%%%%%%%%
 clear
 %%initialize params
-date = '08282022';
-filenum = 2;
-stimulusfile = 6;                   %set to -1 if there is no stimulus presented (not needed for SCANIMAGE save data?)
-stimInfo = [2 0 0];               %[duration prestim *slag*]
-datatype = 'BRUKER';             %BRUKER or SCANIMAGE (needs slag?)
+date = '02162023';
+filenum = 3;
+stimulusfile = -1;                   %set to -1 if there is no stimulus presented (not needed for SCANIMAGE save data?)
+stimInfo = [3 0 0];               %[duration prestim *slag*]
+datatype = 'SCANIMAGE';             %BRUKER or SCANIMAGE (needs slag?)
 saveLocation = 'D:\processed\';     %might change depending on machine
 doNeuropil = 1;                     %extract neuropil signal for subtraction?
-doResample = 0;                     %downsample dff?
+doResample = 1;                     %downsample dff?
 is2pOpto = 0;                       %2pOpto
 
 %%%%%%%%%%%%%%%%%%%%%%
@@ -122,12 +122,16 @@ for k = 1:length(folderList)
         cd([cd,'\Channel1'])
         fileList = dir('*.tif');
         
-        %%%%%%%%%%%
+        %%%%%
         %go through TIFF stacks
         disp 'load stacks and extract traces'
         for ff = 1:length(fileList)
             
             imgstack = ScanImageTiffReader(fileList(ff).name).data; fprintf('.') % <1 sec per 1000 frame stack
+%             imgstack = tiffreadVolume(fileList(ff).name); fprintf('.') % <1 sec per 1000 frame stack
+%             for fi = 1:size(imgstack,3)
+%                 imgstack(:,:,fi) = imgstack(:,:,fi)';
+%             end
 
             for cc = 1:numCells
                 ftrace = mean( reshape (imgstack(  maskstruct(cc).mask(:,:,1:size(imgstack,3)) ), length(find(ce(cc).mask2d)) , size(imgstack,3) , 1));
