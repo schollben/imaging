@@ -1,7 +1,7 @@
 %
 % nmCoord - line coordinates from Image
 % d - nStrokeWidth
-function [mask2d] = genPolyLineROI(nmCoord,dWidth,imgInfo)
+function [mask2d] = genPolyLineROI(nmCoord,dWidth,sizeX,sizeY)
 
 if nargin < 2
     dWidth = 10;
@@ -27,4 +27,4 @@ new_y = [new_y; flipud(y + [delta_y ; delta_y(end)])];
 new_x = [new_x; new_x(1)];
 new_y = [new_y; new_y(1)];
 
-mask2d = poly2mask(new_x,new_y,imgInfo.sizeX,imgInfo.sizeY);
+mask2d = poly2mask(new_x,new_y,sizeX,sizeY);
