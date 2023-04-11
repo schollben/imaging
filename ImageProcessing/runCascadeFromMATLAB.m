@@ -45,7 +45,7 @@ model_name = 'Global_EXC_7.5Hz_smoothing200ms'; % Most recommended model for our
 pyExec = 'C:\Users\scholab\anaconda3\envs\Cascade\python.exe';
 workDir = 'D:\NR1KO_2022\';
 %workDir = 'C:\Users\scholab\Documents\mappingRFs';
-pyFile = 'C:\Users\scholab\Documents\MATLAB\Cascade-Master\runCascade.py';
+pyFile = 'C:\Users\scholab\Documents\Python Scripts\runCascade.py';
 cd C:\Users\scholab\Documents\MATLAB\Cascade-master
 
 %%Setting up MATLAB to use the right python environment ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

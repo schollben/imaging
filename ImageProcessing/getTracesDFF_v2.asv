@@ -18,9 +18,15 @@ datatype = 'BRUKER';             %BRUKER or SCANIMAGE (needs slag?)
 saveLocation = 'D:\processed\';     %might change depending on machine
 doNeuropil = 1;                     %extract neuropil signal for subtraction?
 is2pOpto = 0;                       %2pOpto
+
 framerate = 30;
 opticalZoom = 1.5;
+
 chnk = 1e3;
+
+% For Casacde
+pyExec = 'C:\Users\scholab\anaconda3\envs\Cascade\python.exe';
+pyFile = 'C:\Users\scholab\Documents\Python Scripts\runCascade.py';
 
 %%%%%%%%%%%%%%%%%%%%%%
 %%get data locations
@@ -121,11 +127,8 @@ for f_i = 1:ceil(totalFrames/chnk)
 
     start = ((f_i-1)*chnk + 1);
     stop = (f_i*chnk);
-    if stop>totalFrames
-        stop = totalFrames;
-    end
 
-    imgstack = h5read(fileList.name,'/data',[1 1 start],[sizeX sizeY stop]);
+    imgstack = h5read(fileList.name,'/data',[1 1 start],[sizeX sizeY min(chnk, totalFrames - start)]);
 
     for cc = 1:numCells
         ftrace = mean( reshape (imgstack(  maskstruct(cc).mask(:,:,1:size(imgstack,3)) ), length(find(ce(cc).mask2d)) , size(imgstack,3) , 1));
@@ -312,6 +315,68 @@ if doNeuropil
     NeuropilSubtraction();
 end
 
+%%%%%%
+% If requested, running CASCADE
+% Installation requirements :
+%{
+    1. Have a version of MATLAB that supports either Python 3.7-3.8.
+    Cascade works with these versions, and MathWorks supports running only
+    a limited number of Python versions with each MATLAB release. 
+    See compatibility chart here : (https://www.mathworks.com/support/requirements/python-compatibility.html)
+
+    2. Have miniconda/anaconda/miniforge environment installed.
+
+    3. Create a new Python environment i
+%}
+pyRoot = fileparts(pyExec);
+p = getenv('PATH');
+p = strsplit(p, ';');
+addToPath = {
+    pyRoot
+    fullfile(pyRoot, 'Library', 'mingw-w64', 'bin')
+    fullfile(pyRoot, 'Library', 'usr', 'bin')
+    fullfile(pyRoot, 'Library', 'bin')
+    fullfile(pyRoot, 'Scripts')
+    fullfile(pyRoot, 'bin')
+    };
+p = [addToPath(:); p(:)];
+p = unique(p, 'stable');
+p = strjoin(p, ';');
+setenv('PATH', p);
+
+myMod = py.importlib.import_module('numpy');
+py.importlib.reload(myMod);
+
+dff = ce(1).dff;
+dff = zeros(size(ce, 2), size(dff, 1));
+for i = 1:size(ce,2)
+    dff(i,:) = ce(i).dff;
+    dff(i, dff(i,:)<0) = 0; % Remove negatives
+end
+
+dff_python = py.numpy.array(dff);
+
+cd C:\Users\scholab\Documents\MATLAB\Cascade-master
+results = pyrunfile(pyFile, "results", ...
+    traces = dff_python, do_inference = false, ...
+    frame_rate = framerate, model_name = 'Global_EXC_7.5Hz_smoothing200ms');
+cd(['D:\',datatype,'\',folderList(1).name])
+
+spike_prob = double(pyrun("spike_prob = results['prob']","spike_prob",results = results));
+noise_levels = double(pyrun("noise_levels = results['noise']","noise_levels",results = results));
+discrete_approximation = double(pyrun("discrete_approx = results['discrete_approx']","discrete_approx",results = results));
+spike_time_estimates = double(pyrun("spike_est = results['spike_times']","spike_est",results = results));
+
+for i = 1:size(ce,2)
+    ce(i).spikeInference = spike_prob(i,:);
+    ce(i).inferenceNoiseEstimate = noise_levels(i);
+    if discrete_approximation ~= 0
+        ce(i).discreteApproximation = discrete_approximation(i,:);
+        ce(i).spikeTimeEstimates = spike_time_estimates(i,:);
+    end
+end
+%%%%%%
+
 %stimulus cyc generation - add peak response?
 genstimcyc(stimInfo);
 
@@ -332,6 +397,10 @@ if stimulusfile>-1
         ce(cc).resperr = resperr;
     end
 end
+
+
+
+
 
 %%%%%%%%%%%
 disp saving
