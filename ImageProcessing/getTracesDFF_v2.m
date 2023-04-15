@@ -4,12 +4,11 @@
 %%%%%%%%%%%%%%%%%%%%%%
 clear
 %%initialize params
-saveLocation = 'D:\processed\';     %might change depending on machine
-datatype = 'BRUKER';                %BRUKER or SCANIMAGE
-date = '09222022';
-
-filenum = 6;
-stimulusfile = 12;                  %set to -1 if there is no stimulus presented (not needed for SCANIMAGE save data?)
+saveLocation =  'D:\processed\';    %might change depending on machine
+datatype =      'BRUKER';        %BRUKER or SCANIMAGE
+date =          '11292022';
+filenum = 3;
+stimulusfile = 7;                  %set to -1 if there is no stimulus presented (not needed for SCANIMAGE save data?)
 durResp = 2;                        %window to look for responses
 
 doNeuropil = 0;                     %extract neuropil signal for subtraction?
@@ -17,7 +16,7 @@ is2pOpto = 0;                       %if using 2P optogenetic stimulation
 isvoltage = 0;                      %if recording Post-ASAP
 
 framePeriod = 0.033;                %recording 1/framerate (need to eventually read from metadata
-opticalZoom = 2;                    %zoom from recording to get scale-->  SI: 1 =  1.9531 pixels/micron   BRUKER: 1 = 2.44 pixels/micron (check)
+opticalZoom = 10;                    %zoom from recording to get scale-->  SI: 1 =  1.9531 pixels/micron   BRUKER: 1 = 2.44 pixels/micron (check)
 % scale = 0; %pixel per microns
 % depth = 0; 
 % pathlength = 0; %distance from soma
@@ -54,6 +53,8 @@ if exist('RoiSet.zip','file')
             locatedDendriteROI = 1;
         end
     end
+else
+    disp 'no ROIs'
 end
 
 %%%%%%%%%%%
