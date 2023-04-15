@@ -7,18 +7,19 @@ function []=genstimcyc(stimInfo)
 global ce
 
 if nargin==0
-   stimDur = 2;
-   pre = 0;
-   slag = 0;
+    stimDur = 2;
+    pre = 0;
+    slag = 0;
 else
-   stimDur = stimInfo(1);
-   pre = stimInfo(2);
-   slag = stimInfo(3);
+    stimDur = stimInfo(1);
+    pre = stimInfo(2);
+    slag = stimInfo(3);
 end
 
-if isfield(ce,'stimOn2pFrame')
+stimID = ce(1).stimID;
 
-    stimID = ce(1).stimID;
+if isfield(ce,'stimOn2pFrame') && floor(length(stimID)/length(unique(stimID)))>2 %dont run unless many trials per stim condition
+
     stimOn2pFrame = ce(1).stimOn2pFrame;
     uniqStims = ce(1).uniqStims;
     ntrials = floor(length(stimID) / length(uniqStims));

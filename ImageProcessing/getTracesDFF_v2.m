@@ -1,37 +1,39 @@
 % Script for extracting signals from ROIs defined by ImageJ from image
 % stacks collected by Scanimge or Bruker Software
-%
-%
-% to add later (for spine imaging):
-% depth = 0; 
-% pathlength = 0; %distance from soma
-% denType = 'basal'; 
-% scale = 0; %pixel per microns
+
 %%%%%%%%%%%%%%%%%%%%%%
 clear
 %%initialize params
-date = '09222022';
-filenum = 6;
-stimulusfile = -1;                   %set to -1 if there is no stimulus presented (not needed for SCANIMAGE save data?)
-stimInfo = [3 0 0];               %[duration prestim *slag*]
-datatype = 'BRUKER';             %BRUKER or SCANIMAGE (needs slag?)
 saveLocation = 'D:\processed\';     %might change depending on machine
-doNeuropil = 1;                     %extract neuropil signal for subtraction?
-is2pOpto = 0;                       %2pOpto
+datatype = 'BRUKER';                %BRUKER or SCANIMAGE
+date = '09222022';
 
-framerate = 30;
-opticalZoom = 1.5;
+filenum = 6;
+stimulusfile = 12;                  %set to -1 if there is no stimulus presented (not needed for SCANIMAGE save data?)
+durResp = 2;                        %window to look for responses
 
-chnk = 1e3;
+doNeuropil = 0;                     %extract neuropil signal for subtraction?
+is2pOpto = 0;                       %if using 2P optogenetic stimulation
+isvoltage = 0;                      %if recording Post-ASAP
 
+framePeriod = 0.033;                %recording 1/framerate (need to eventually read from metadata
+opticalZoom = 2;                    %zoom from recording to get scale-->  SI: 1 =  1.9531 pixels/micron   BRUKER: 1 = 2.44 pixels/micron (check)
+% scale = 0; %pixel per microns
+% depth = 0; 
+% pathlength = 0; %distance from soma
+% denType = 'basal'; 
+
+chnk = 1e3;                         %how much data to load for signal extraction
+
+%%%%%%%%%%%%%%%%%%%%%%
 % For Casacde
-pyExec = 'C:\Users\scholab\anaconda3\envs\Cascade\python.exe';
+pyExec = 'C:\Users\scholab\anaconda3\envs\Cascade\';
 pyFile = 'C:\Users\scholab\Documents\Python Scripts\runCascade.py';
-cascade2p_dir = 'C:\Users\scholab\Documents\MATLAB\Cascade-master'
+cascade2p_dir = 'C:\Users\scholab\Documents\MATLAB\Cascade-master';
 
 %%%%%%%%%%%%%%%%%%%%%%
 %%get data locations
-tic; folderList = gettargetFolders2(['D:\',datatype,'\'],date,filenum,'TSeries');
+folderList = gettargetFolders2(['D:\',datatype,'\'],date,filenum,'TSeries');
 
 %reg folder location
 cd(['D:\',datatype,'\',folderList(1).name])
@@ -63,7 +65,7 @@ sizeY = h.Datasets.Dataspace.Size(2);
 totalFrames = h.Datasets.Dataspace.Size(3);
 
 %%%%%%%%%%%
-disp 'build ce struct and generate sparse masks'
+tic; disp 'build ce struct and generate sparse masks'
 global ce
 ce = [];
 maskstruct = [];
@@ -89,7 +91,8 @@ for cc = 1:numCells
     ce(cc).mask2d = sparse(mask2d);
     ce(cc).date = date;
     ce(cc).file = filenum;
-    ce(cc).framePeriod = framerate;
+    ce(cc).framePeriod = framePeriod;
+    ce(cc).frameRate = 1/framePeriod;
     ce(cc).opticalZoom = opticalZoom;
 
     ce(cc).soma = (strcmp(sROI{cc}.strType,'Freehand') | strcmp(sROI{cc}.strType,'Oval')) ...
@@ -111,7 +114,6 @@ for cc = 1:numCells
 
     fprintf('.')
 end
-ce(1).framePeriod = mean([ce.framePeriod]);
 toc
 
 if doNeuropil
@@ -120,10 +122,8 @@ if doNeuropil
     neuropil3dmask = ndSparse( repmat( neuropilmask , 1, 1, chnk));
 end
 
-
-%%
-tic
-disp 'load stacks and extract traces'
+%%%%%%%%%%%
+tic; disp 'load stacks and extract traces'
 for f_i = 1:ceil(totalFrames/chnk)
 
     start = ((f_i-1)*chnk + 1);
@@ -146,19 +146,20 @@ for f_i = 1:ceil(totalFrames/chnk)
     %save sample image
     if f_i==1
         ce(1).img = squeeze(mean(imgstack,3))';
+%         ce(1).imgStruct = 
+        % COLLECT RED CHANNEL IMAGE IF IT EXISTS - NEED FOR PTEN KO DATA FOR EXAMPLE
     end
     fprintf('.')
 end
 toc
-%%
+
 %%%%%%%%%%%
-disp 'calculate df/f for all ROIs'
-downsampvalue = 4;
+tic; disp 'calculate df/f for all ROIs'
 for cc = 1:length(ce)
-    %             %%%%%%%%%%%%
-    %             ce(cc).raw = -ce(cc).raw;
-    %             ce(cc).raw = ce(cc).raw - min(ce(cc).raw);
-    %             %%%%%%%%%%%%
+    if isvoltage
+        ce(cc).raw = -ce(cc).raw;
+        ce(cc).raw = ce(cc).raw - min(ce(cc).raw);
+    end
     dff = filterBaseline_dFcomp2( ce(cc).raw ,99*4);
     ce(cc).dff = dff;
 end
@@ -173,18 +174,16 @@ toc
 %%%%%%%
 if stimulusfile>-1
 
-    disp 'grabbing two-photon frametimes'
+    tic; disp 'grabbing two-photon frametimes'
 
     cd(['D:\',datatype,'\',folderList(1).name,'\'])
 
     if strcmp(datatype,'BRUKER')
+        
+        PYSCHOPYLOC = [datatype,'_PSYCHOPY'];
 
         %get voltage recording (10kHz sampling)
         voltageFiles = dir('*.csv');
-        if isempty(voltageFiles)
-            cd(['D:\',datatype,'\',folderList(k).name,'\Registered\'])
-            voltageFiles = dir('*.csv');
-        end
         if length(voltageFiles)>1
             disp 'why is there multiple voltage files??'
         else
@@ -201,11 +200,9 @@ if stimulusfile>-1
 
     elseif strcmp(datatype,'SCANIMAGE') %.h5 files from wavesurfer
 
+        PYSCHOPYLOC = [datatype,'_PSYCHOPY'];
+
         voltageFiles = dir('*.h5');
-        if isempty(voltageFiles)
-            cd(['D:\',datatype,'\',folderList(k).name,'\Registered\'])
-            voltageFiles = dir('*.h5');
-        end
         if length(voltageFiles)>1
             disp 'why is there multiple voltage files??'
         else
@@ -243,7 +240,7 @@ if stimulusfile>-1
         ce(1).photostimTrig = photostimTrig;
     end
 
-    cd(['D:\Pyschopy\',date(5:end),'-',date(1:2),'-',date(3:4)])
+    cd(['D:\',PYSCHOPYLOC,'\',date(5:end),'-',date(1:2),'-',date(3:4)])
     pyschopyFile = readmatrix(['T',sprintf('%03d',stimulusfile),'.txt']);
 
     fidi = fopen(['T',sprintf('%03d',stimulusfile),'.txt'], 'rt');
@@ -257,7 +254,6 @@ if stimulusfile>-1
         ce(1).stimstr = stimstr{1};
         uniqStims = unique(stimID);
         ce(1).uniqStims = uniqStims;
-
         ce(1).stimProperties = pyschopyFile(:,2:end);
 
     elseif is2pOpto
@@ -297,18 +293,13 @@ if stimulusfile>-1
         ce(1).TargetStim2pFrame = TargetStim2pFrame;
     end
 
-    %%%%%%%%%%%%%%%%%
-    %need to modify effective framerate and stimOn2pFrame
-    ce(1).framePeriod =  ce(1).framePeriod ;
-    ce(1).stimOn2pFrame = floor( ce(1).stimOn2pFrame);
-
     if is2pOpto
         ce(1).TargetStim2pFrame = floor( ce(1).TargetStim2pFrame);
     end
 else
     disp 'no stimulus triggers recorded'
 end
-
+toc
 
 %%%%%%%%%%%
 %neuropil subtraction
@@ -352,7 +343,8 @@ end
     MATLAB data can be passed back and forth between the two programs.
 
 %}
-pyRoot = fileparts(pyExec);
+
+tic; pyRoot = fileparts(pyExec);
 p = getenv('PATH');
 p = strsplit(p, ';');
 addToPath = {
@@ -383,7 +375,7 @@ dff_python = py.numpy.array(dff);
 cd(cascade2p_dir)
 results = pyrunfile(pyFile, "results", ...
     traces = dff_python, do_inference = false, ...
-    frame_rate = framerate, model_name = 'Global_EXC_7.5Hz_smoothing200ms');
+    frame_rate = 1/framePeriod, model_name = 'Global_EXC_30Hz_smoothing50ms_causalkernel'); %'Global_EXC_7.5Hz_smoothing200ms');
 cd(['D:\',datatype,'\',folderList(1).name])
 
 spike_prob = double(pyrun("spike_prob = results['prob']","spike_prob",results = results));
@@ -400,17 +392,17 @@ for i = 1:size(ce,2)
         ce(i).spikeTimeEstimates = spike_time_estimates(i,:);
     end
 end
+toc
 %%%%%%
 
 %stimulus cyc generation - add peak response?
-genstimcyc(stimInfo);
+genstimcyc();
 
 %dendritic substraction
 DendriteSubtraction(1)        %argin = 1 - use full trace for subtraction, argin = 2 - use stimuli ('stimulus duration' periods)
 
-
 %extract some basic responses from cyc or cycRes
-if stimulusfile>-1
+if stimulusfile>-1 && floor(length(stimID)/length(unique(stimID)))>2
     for cc = 1:length(ce)
         if ~ce(cc).spine
             [resp,resps,resperr] = computePeakResp(ce(cc).cyc);
@@ -423,15 +415,8 @@ if stimulusfile>-1
     end
 end
 
-
-
-
-
 %%%%%%%%%%%
-disp saving
-save([saveLocation,folderList(k).name,'.mat'],'ce','-mat','-v7.3')
-
-disp finished
+disp saving; save([saveLocation,folderList(1).name,'.mat'],'ce','-mat','-v7.3'); disp finished
 
 
 
