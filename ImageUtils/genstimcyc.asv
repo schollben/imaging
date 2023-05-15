@@ -54,13 +54,14 @@ if isfield(ce,'stimOn2pFrame')
 
                     if tt(end) < length(dff)
                         f = dff(tt);
-                        
+                        s = spk(tt);
                     else
                         f = NaN(length(tt),1);
+                        s = NaN(length(tt),1);
                     end
 
                     ce(cc).cyc(ind,trialList(ind),:) = f;
-
+                    ce(cc).cycspk(ind,trialList(ind),:) = s;
                 end
             end
 

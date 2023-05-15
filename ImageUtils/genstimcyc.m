@@ -38,7 +38,9 @@ if isfield(ce,'stimOn2pFrame')
             ce(cc).cycspk = ce(cc).cyc;
 
             dff = ce(cc).dff;
-            spk = ce(cc).spikeInference;
+            if isfield(ce,'spikeInference')
+                spk = ce(cc).spikeInference;
+            end
 
             trialList = zeros(1,length(uniqStims));
 
@@ -54,14 +56,18 @@ if isfield(ce,'stimOn2pFrame')
 
                     if tt(end) < length(dff)
                         f = dff(tt);
-                        s = spk(tt);
+                        if isfield(ce,'spikeInference')
+                            s = spk(tt);
+                        end
                     else
                         f = NaN(length(tt),1);
                         s = NaN(length(tt),1);
                     end
 
                     ce(cc).cyc(ind,trialList(ind),:) = f;
-                    ce(cc).cycspk(ind,trialList(ind),:) = s;
+                    if isfield(ce,'spikeInference')
+                        ce(cc).cycspk(ind,trialList(ind),:) = s;
+                    end
                 end
             end
 

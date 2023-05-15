@@ -5,18 +5,19 @@
 clear
 %%initialize params
 saveLocation =  'D:\processed\';    %might change depending on machine
-datatype =      'BRUKER';        %BRUKER or SCANIMAGE
-date =          '11292022';
+datatype =      'SCANIMAGE';           %BRUKER or SCANIMAGE
+date =          '04102023';
 filenum = 3;
-stimulusfile = 7;                  %set to -1 if there is no stimulus presented (not needed for SCANIMAGE save data?)
+stimulusfile = 2;                   %set to -1 if there is no stimulus presented (not needed for SCANIMAGE save data?)
 durResp = 2;                        %window to look for responses
 
-doNeuropil = 0;                     %extract neuropil signal for subtraction?
+doNeuropil = 0;                     %extract neuropil signal for subtraction? most important for mouse
+doCascade = 0;                      %spike inference?
 is2pOpto = 0;                       %if using 2P optogenetic stimulation
-isvoltage = 0;                      %if recording Post-ASAP
+isvoltage = 0;                                                           %if recording Post-ASAP
 
 framePeriod = 0.033;                %recording 1/framerate (need to eventually read from metadata
-opticalZoom = 10;                    %zoom from recording to get scale-->  SI: 1 =  1.9531 pixels/micron   BRUKER: 1 = 2.44 pixels/micron (check)
+opticalZoom = 2;                    %zoom from recording to get scale-->  SI: 1 =  1.9531 pixels/micron   BRUKER: 1 = 2.44 pixels/micron (check)
 % scale = 0; %pixel per microns
 % depth = 0; 
 % pathlength = 0; %distance from soma
@@ -35,7 +36,8 @@ cascade2p_dir = 'C:\Users\scholab\Documents\MATLAB\Cascade-master';
 folderList = gettargetFolders2(['D:\',datatype,'\'],date,filenum,'TSeries');
 
 %reg folder location
-cd(['D:\',datatype,'\',folderList(1).name])
+cd(['D:\',datatype,'\',folderList(1).name,'\'])
+% cd(['D:\',datatype,'\',folderList(1).name,'\Registered\Channel1\'])
 %get hdf5 filen
 fileList = dir('*.h5');
 fileList = fileList([fileList.bytes]==max([fileList.bytes]));
@@ -130,7 +132,7 @@ for f_i = 1:ceil(totalFrames/chnk)
     start = ((f_i-1)*chnk + 1);
     stop = (f_i*chnk);
 
-    imgstack = h5read(fileList.name,'/data',[1 1 start],[sizeX sizeY min(chnk, totalFrames - start)]);
+    imgstack = h5read(fileList.name,['/',h.Datasets.Name],[1 1 start],[sizeX sizeY min(chnk, totalFrames - start)]);
 
     for cc = 1:numCells
         ftrace = mean( reshape (imgstack(  maskstruct(cc).mask(:,:,1:size(imgstack,3)) ), length(find(ce(cc).mask2d)) , size(imgstack,3) , 1));
@@ -147,7 +149,6 @@ for f_i = 1:ceil(totalFrames/chnk)
     %save sample image
     if f_i==1
         ce(1).img = squeeze(mean(imgstack,3))';
-%         ce(1).imgStruct = 
         % COLLECT RED CHANNEL IMAGE IF IT EXISTS - NEED FOR PTEN KO DATA FOR EXAMPLE
     end
     fprintf('.')
@@ -172,7 +173,7 @@ if doNeuropil
 end
 toc
 
-%%%%%%%
+%%%%%%
 if stimulusfile>-1
 
     tic; disp 'grabbing two-photon frametimes'
@@ -202,12 +203,16 @@ if stimulusfile>-1
     elseif strcmp(datatype,'SCANIMAGE') %.h5 files from wavesurfer
 
         PYSCHOPYLOC = [datatype,'_PSYCHOPY'];
-
+%%
         voltageFiles = dir('*.h5');
-        if length(voltageFiles)>1
-            disp 'why is there multiple voltage files??'
-        else
-            VoltageRecording_filename = voltageFiles(1).name;
+        foundWavesurfer = 0;
+        cnt = 0;
+        while ~foundWavesurfer
+            cnt = cnt+1;
+            VoltageRecording_filename = voltageFiles(cnt).name;
+            if strcmp(VoltageRecording_filename(1:7),'TSeries')
+                foundWavesurfer = 1;
+            end
         end
         Vrec = h5read(VoltageRecording_filename,['/sweep_',VoltageRecording_filename(end-6:end-3),'/analogScans']);
         Vrec = double(Vrec);
@@ -309,6 +314,7 @@ if doNeuropil
 end
 
 %%%%%%
+if doCascade
 % If requested, running CASCADE
 % Installation requirements :
 %{
@@ -394,10 +400,11 @@ for i = 1:size(ce,2)
     end
 end
 toc
+end
 %%%%%%
 
-%stimulus cyc generation - add peak response?
-genstimcyc();
+%stimulus cyc generation - add peak SPIKE response?
+genstimcyc([durResp 0 0]);
 
 %dendritic substraction
 DendriteSubtraction(1)        %argin = 1 - use full trace for subtraction, argin = 2 - use stimuli ('stimulus duration' periods)
