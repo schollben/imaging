@@ -16,6 +16,8 @@ elseif ismember(220, max(StimOnLocations))
     wid = 11; hei = 20;
 elseif ismember(50, max(StimOnLocations))
     wid = 5; hei = 10;
+elseif ismember(10, max(StimOnLocations))
+    wid = 2; hei = 5;
 end
 simulStims = size(StimOnLocations, 2);
 
@@ -24,9 +26,9 @@ simulStims = size(StimOnLocations, 2);
 
 
 % Forward dFF
-rDff = zeros(wid*hei,30); % 220,16 originally.
+rDff = zeros(wid*hei,120); % 220,16 originally.
 for n = 1:length(StimOnTimes)
-    dff = dff_all(StimOnTimes(n) - 3:StimOnTimes(n) + 29, cc)';
+    dff = dff_all(StimOnTimes(n) - 3:StimOnTimes(n) + 119, cc)';
     dff = dff - mean(dff(1:3)); % Originally just dff(1:2)
     dff = dff(4:end);
     rDff(StimOnLocations(n,:),:) = rDff(StimOnLocations(n,:),:) + ones(simulStims,1)*dff;
