@@ -35,10 +35,17 @@ if isfield(ce,'stimOn2pFrame')
 
             ce(cc).cyc = [];
             ce(cc).cyc = zeros( length(uniqStims), ntrials, stimDur + pre);
-            ce(cc).cycspk = ce(cc).cyc;
+            ce(cc).cycSpkinf = ce(cc).cyc;
 
             dff = ce(cc).dff;
-            spk = ce(cc).spikeInference;
+            
+            if isfield(ce,'spikeInference')
+                spk = ce(cc).spikeInference;
+            end
+
+            if ce(cc).dendrite && isfield(ce,'hotspot')
+                hotspot = ce(cc).hotspot;
+            end
 
             trialList = zeros(1,length(uniqStims));
 
@@ -53,15 +60,32 @@ if isfield(ce,'stimOn2pFrame')
                     trialList(ind) = trialList(ind)+1;
 
                     if tt(end) < length(dff)
+                        
                         f = dff(tt);
-                        s = spk(tt);
+                        
+                        if isfield(ce,'spikeInference')
+                            s = spk(tt);
+                        end
+
+                        if ce(cc).dendrite && isfield(ce,'hotspot')
+                            d = hotspot(:,tt);
+                        end
+
                     else
                         f = NaN(length(tt),1);
                         s = NaN(length(tt),1);
+                        d = NaN(size(hotspot,1),length(tt));
                     end
 
                     ce(cc).cyc(ind,trialList(ind),:) = f;
-                    ce(cc).cycspk(ind,trialList(ind),:) = s;
+                    
+                    if isfield(ce,'spikeInference')
+                        ce(cc).cycispk(ind,trialList(ind),:) = s;
+                    end
+                    
+                    if ce(cc).dendrite && isfield(ce,'hotspot')
+                         ce(cc).cycHotspot(ind,trialList(ind),:,:) = d;
+                    end
                 end
             end
 

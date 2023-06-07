@@ -12,7 +12,7 @@ F_temp = raw;
 F_temp = cat(1,repmat(mean(F_temp(2:4)),pts,1),F_temp);
 F_temp = cat(1,F_temp,repmat(mean(F_temp(end-4:end-1)),pts,1));
 %25th percentile medfilt
-F_temp = prctfilt1(F_temp,pts);
+F_temp = medfilt1(F_temp,pts);
 %remove padding
 raw_new = F_temp(pts+1:end-pts);
 

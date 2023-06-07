@@ -5,23 +5,23 @@
 clear
 %%initialize params
 saveLocation =  'D:\processed\';    %might change depending on machine
-datatype =      'SCANIMAGE';           %BRUKER or SCANIMAGE
-date =          '05152023';
-filenum = 1;
-stimulusfile = 7;                   %set to -1 if there is no stimulus presented (not needed for SCANIMAGE save data?)
-durResp = 2;                        %window to look for responses
+datatype =      'BRUKER';           %BRUKER or SCANIMAGE
+date =          '08252022';
+filenum = 3;
+stimulusfile = 10;                  %set to -1 if there is no stimulus presented (not needed for SCANIMAGE save data?)
+opticalZoom = 15;                   %zoom from recording to get scale/size
+durResp = 2.5;                      %window to look for responses
 
 doNeuropil = 0;                     %extract neuropil signal for subtraction? most important for mouse
 doCascade = 0;                      %spike inference?
 is2pOpto = 0;                       %if using 2P optogenetic stimulation
-isvoltage = 0;                                                          %if recording Post-ASAP
+isvoltage = 0;                      %if recording Post-ASAP
+extractHotspot = 1;                 %spline fit and straighten image to grab dff?
 
 framePeriod = 0.033;                %recording 1/framerate (need to eventually read from metadata
-opticalZoom = 2;                    %zoom from recording to get scale-->  SI: 1 =  1.9531 pixels/micron   BRUKER: 1 = 2.44 pixels/micron (check)
-% scale = 0; %pixel per microns
-% depth = 0; 
-% pathlength = 0; %distance from soma
-% denType = 'basal'; 
+depth = 0; 
+pathlength = 0; %distance from soma
+denType = ''; 
 
 chnk = 1e3;                         %how much data to load for signal extraction
 
@@ -41,7 +41,7 @@ cd(['D:\',datatype,'\',folderList(1).name,'\'])
 %get hdf5 filen
 fileList = dir('*.h5');
 fileList = fileList([fileList.bytes]==max([fileList.bytes]));
-
+             
 %%%%%%%%%%%
 %load RoiSet.zip
 if exist('RoiSet.zip','file')
@@ -57,6 +57,7 @@ if exist('RoiSet.zip','file')
     end
 else
     disp 'no ROIs'
+    return
 end
 
 %%%%%%%%%%%
@@ -111,7 +112,12 @@ for cc = 1:numCells
     ce(cc).depth = [];                                  %imgInfo.Zdepth; %distance from surface
     ce(cc).img = [];
 
-    ce(cc).scale = 1 / 1;% imgInfo.micronsPerPixel(1);      % pixels per micron -> NEED TO ADD FOR SCANIMAGE DATA
+    %image size (microns)
+    if strcmp(datatype,'BRUKER')
+        ce(cc).scale = (1136)/opticalZoom; %2023-06-07 BS
+    elseif strcmp(datatype,'SCANIMAGE')
+        ce(cc).scale = (1000)/opticalZoom; %2023-06-07 BS
+    end
     ce(cc).raw = [];
     ce(cc).raw_neuropil = [];
 
@@ -149,12 +155,29 @@ for f_i = 1:ceil(totalFrames/chnk)
     %save sample image
     if f_i==1
         ce(1).img = squeeze(mean(imgstack,3))';
-        % COLLECT RED CHANNEL IMAGE IF IT EXISTS - NEED FOR PTEN KO DATA FOR EXAMPLE
     end
+
+    if extractHotspot
+        %dendritic hotspot data acq
+        %downsize image to ~1 pixel per micron and straighten
+        if sum([ce.dendrite])>0
+            px_per_um = size(imgstack,1)/ce(1).scale;
+            imgstack = imresize(imgstack, 1/px_per_um);
+            for cc = find([ce.dendrite])
+                pts = ce(cc).celloutline / px_per_um;
+                IM2 = straighten(imgstack , pts , 5); %removed spline fitting procedure
+                if f_i==1
+                    ce(cc).dendriteImage = squeeze(mean(IM2,3));
+                    ce(cc).hotspot = [];
+                end
+                ce(cc).hotspot = cat(2, ce(cc).hotspot, squeeze(mean(IM2,2)));
+            end
+        end
+    end
+
     fprintf('.')
 end
 toc
-
 %%%%%%%%%%%
 tic; disp 'calculate df/f for all ROIs'
 for cc = 1:length(ce)
@@ -164,6 +187,14 @@ for cc = 1:length(ce)
     end
     dff = filterBaseline_dFcomp2( ce(cc).raw ,99*4);
     ce(cc).dff = dff;
+
+    if ce(cc).dendrite && isfield(ce,'dendriteImage')
+        for si = 1:size(ce(cc).hotspot,1)
+            f = ce(cc).hotspot(si,:);
+            dff = filterBaseline_dFcomp2( f' ,99*4);
+            ce(cc).hotspot(si,:) = dff;
+        end
+    end
 end
 
 if doNeuropil
@@ -403,11 +434,12 @@ toc
 end
 %%%%%%
 
-%stimulus cyc generation - add peak SPIKE response?
-genstimcyc([durResp 0 1]);
+%%stimulus cyc generation - add peak SPIKE response?
+genstimcyc([durResp 0 0]);
 
 %dendritic substraction
 DendriteSubtraction(1)        %argin = 1 - use full trace for subtraction, argin = 2 - use stimuli ('stimulus duration' periods)
+
 
 %extract some basic responses from cyc or cycRes
 if stimulusfile>-1 && floor(length(stimID)/length(unique(stimID)))>2

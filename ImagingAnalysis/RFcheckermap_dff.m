@@ -1,9 +1,9 @@
 
 function RFcheckermap_dff(cc)
-
+%%
 global ce
 
-dff_all = [ce.dff];
+dff_all = [ce.dffRes];
 % for c = 1:length(ce)
 %     spike_prob(c,:) = ce(c).spikeInference;
 % end
@@ -16,6 +16,8 @@ elseif ismember(220, max(StimOnLocations))
     wid = 11; hei = 20;
 elseif ismember(50, max(StimOnLocations))
     wid = 5; hei = 10;
+elseif ismember(32, max(StimOnLocations))
+    wid = 4; hei = 8;
 elseif ismember(10, max(StimOnLocations))
     wid = 2; hei = 5;
 end
@@ -26,12 +28,14 @@ simulStims = size(StimOnLocations, 2);
 
 
 % Forward dFF
-rDff = zeros(wid*hei,120); % 220,16 originally.
+rDff = zeros(wid*hei,60); % 220,16 originally.
 for n = 1:length(StimOnTimes)
-    dff = dff_all(StimOnTimes(n) - 3:StimOnTimes(n) + 119, cc)';
+    if (StimOnTimes(n) + 59) < length(dff_all)
+    dff = dff_all(StimOnTimes(n) - 3:StimOnTimes(n) + 59, cc)';
     dff = dff - mean(dff(1:3)); % Originally just dff(1:2)
     dff = dff(4:end);
     rDff(StimOnLocations(n,:),:) = rDff(StimOnLocations(n,:),:) + ones(simulStims,1)*dff;
+    end
 end
 
 rDff = reshape(rDff,hei,wid,size(rDff,2));
@@ -42,7 +46,8 @@ for x=1:hei
     for y = 1:wid
 t = 1:size(rDff,3);
 t = t + 1.2*length(t)*(x - 1);
-plot(t,squeeze(rDff(x,y,:)) - y*5,'k')
+%plot(t,squeeze(rDff(x,y,:)) - y*5,'k')
+plot(t,squeeze(rDff(x,y,:)) - y*10,'k')
     end
 end
 

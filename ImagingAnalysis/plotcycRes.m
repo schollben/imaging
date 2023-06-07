@@ -8,7 +8,7 @@ for cc=1:length(ce)
         xt = (1:nl) + (5+nl)*(ii-1);
 
         x = (ones(length(inds),1)*xt);
-        y = nanmean(squeeze(cyc(ii,:,:)),1) - 0.5*cc;
+        y = nanmean(squeeze(cyc(ii,:,:)),1) - 0.5*(cc-1);
         errBar = nanstd(squeeze(cyc(ii,:,:)),1)./sqrt(nt);
         shadedErrorBar(xt,y,errBar,'k')
         hold on

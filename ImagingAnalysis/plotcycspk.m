@@ -5,7 +5,7 @@ for cc=1:length(ce)
     [~,nt,nl] = size(cyc);
     inds = [1:nt];
     for ii = cycn
-        xt = (1:nl) + (5+nl)*(ii-1);
+        xt = (1:nl) + (10+nl)*(ii-1);
 
         x = (ones(length(inds),1)*xt);
         y = nanmean(squeeze(cyc(ii,:,:)),1) - 0.5*(cc-1);

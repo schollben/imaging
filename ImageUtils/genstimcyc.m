@@ -35,11 +35,20 @@ if isfield(ce,'stimOn2pFrame')
 
             ce(cc).cyc = [];
             ce(cc).cyc = zeros( length(uniqStims), ntrials, stimDur + pre);
-            ce(cc).cycspk = ce(cc).cyc;
+            ce(cc).cycSpkinf = ce(cc).cyc;
+             
+            if ce(cc).dendrite && isfield(ce,'hotspot')
+                 ce(cc).cycHotspot = zeros( length(uniqStims), ntrials, size(ce(cc).hotspot,1), stimDur + pre);
+            end
 
             dff = ce(cc).dff;
+            
             if isfield(ce,'spikeInference')
                 spk = ce(cc).spikeInference;
+            end
+
+            if ce(cc).dendrite && isfield(ce,'hotspot')
+                hotspot = ce(cc).hotspot;
             end
 
             trialList = zeros(1,length(uniqStims));
@@ -55,18 +64,31 @@ if isfield(ce,'stimOn2pFrame')
                     trialList(ind) = trialList(ind)+1;
 
                     if tt(end) < length(dff)
+                        
                         f = dff(tt);
+                        
                         if isfield(ce,'spikeInference')
                             s = spk(tt);
                         end
+
+                        if ce(cc).dendrite && isfield(ce,'hotspot')
+                            d = hotspot(:,tt);
+                        end
+
                     else
                         f = NaN(length(tt),1);
                         s = NaN(length(tt),1);
+                        d = NaN(size(hotspot,1),length(tt));
                     end
 
                     ce(cc).cyc(ind,trialList(ind),:) = f;
+                    
                     if isfield(ce,'spikeInference')
-                        ce(cc).cycspk(ind,trialList(ind),:) = s;
+                        ce(cc).cycSpkinf(ind,trialList(ind),:) = s;
+                    end
+                    
+                    if ce(cc).dendrite && isfield(ce,'hotspot')
+                         ce(cc).cycHotspot(ind,trialList(ind),:,:) = d;
                     end
                 end
             end
@@ -76,8 +98,6 @@ if isfield(ce,'stimOn2pFrame')
         end
     end
 end
-
-
 
 
 
